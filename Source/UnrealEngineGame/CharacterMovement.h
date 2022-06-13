@@ -26,4 +26,33 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// Handles input for moving forward and backward.
+	UFUNCTION()
+		void MoveForward(float Value);
+
+	// Handles input for moving right and left.
+	UFUNCTION()
+		void MoveRight(float Value);
+
+	// Sets jump flag when key is pressed.
+	UFUNCTION()
+		void StartJump();
+
+	// Clears jump flag when key is released.
+	UFUNCTION()
+		void StopJump();
+
+	// Sets sprint flag when key is pressed.
+	UFUNCTION()
+		void StartSprint();
+
+	// Clears sprint flag when key is released.
+	UFUNCTION()
+		void StopSprint();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float walkSpeed = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float speedMultiplier = 10;
 };
