@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "CharacterMovement.generated.h"
 
 UCLASS()
@@ -51,8 +54,9 @@ public:
 		void StopSprint();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float walkSpeed = 1;
+	float speedMultiplier = 2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float speedMultiplier = 10;
+	// FPS camera.
+	UPROPERTY(VisibleAnywhere)
+		UCameraComponent* FPSCameraComponent;
 };
