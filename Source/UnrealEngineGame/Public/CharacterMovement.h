@@ -10,6 +10,9 @@
 #include "Projectile.h"
 #include "CharacterMovement.generated.h"
 
+
+class HealthBar;
+
 UCLASS()
 class UNREALENGINEGAME_API ACharacterMovement : public ACharacter
 {
@@ -69,7 +72,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 		FVector MuzzleOffset;
 
+	//UPROPERTY(EditDefaultsOnly, Category = Projectile)
+		
 	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 		TSubclassOf<class AProjectile> ProjectileClass;
+
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<class UHealthBar> HealthBarClass;
 };

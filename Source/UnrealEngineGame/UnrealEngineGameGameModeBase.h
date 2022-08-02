@@ -13,5 +13,4 @@ UCLASS()
 class UNREALENGINEGAME_API AUnrealEngineGameGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
 };
