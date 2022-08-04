@@ -33,6 +33,8 @@ public:
 	void Server_SpawnCharacter(FVector Location, FRotator Rotation);
 	void Server_SpawnCharacter_Implementation(FVector Location, FRotator Rotation);
 
+	void Die();
+
 	//Toggle Character Selection Menu
 	//void ToggleCharacterSelectionMenu(bool toggle);
 
@@ -46,6 +48,8 @@ private:
 
 	UPROPERTY()
 	TSubclassOf<class ACharacterMovement> SelectedCharacter;
+
+	ACharacterMovement* currentCharacter;
 
 	//UPROPERTY()
 	//TSubclassOf<class UCharacterSelectionMenu> SelectedCharacter;

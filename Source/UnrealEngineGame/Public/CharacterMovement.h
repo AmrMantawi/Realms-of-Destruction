@@ -10,9 +10,6 @@
 #include "Projectile.h"
 #include "CharacterMovement.generated.h"
 
-
-class HealthBar;
-
 UCLASS()
 class UNREALENGINEGAME_API ACharacterMovement : public ACharacter
 {
@@ -22,9 +19,24 @@ public:
 	// Sets default values for this character's properties
 	ACharacterMovement();
 
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	void Setup();
+
+private:
+	~ACharacterMovement();
+
+	UPROPERTY(EditAnywhere)
+		float maxHealth;
+
+	UPROPERTY(EditAnywhere)
+		float maxShield;
+
+	void Die();
+
 
 public:	
 	// Called every frame
@@ -80,4 +92,30 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		TSubclassOf<class UHealthBar> HealthBarClass;
+
+	UPROPERTY()
+		class UHealthBar* PlayerHealthBar;
+
+	//Take Damage
+	void CharacterTakeDamage(float value);
+
+	//Damage To Health
+	void DamageHealth(float value);
+
+	//Damage to Sheild
+	void DamageShield(float value);
+
+	//Gain Health
+	void GainHealth(float value);
+
+	//Gain Sheild
+	void GainShield(float value);
+
+	float currentHealth;
+	float currentShield;
+
+	UPROPERTY()
+		class AGamePlayerController* GamePlayerController;
+
+	AGamePlayerController* PC;
 };

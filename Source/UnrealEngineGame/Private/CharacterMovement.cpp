@@ -2,12 +2,16 @@
 
 
 #include "CharacterMovement.h"
+#include "Blueprint/UserWidget.h"
+#include "HealthBar.h"
+#include "GamePlayerController.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ACharacterMovement::ACharacterMovement()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+    PrimaryActorTick.bCanEverTick = true;
 
     // Create a first person camera component.
     FPSCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
@@ -22,14 +26,78 @@ ACharacterMovement::ACharacterMovement()
     // Enable the pawn to control camera rotation.
     FPSCameraComponent->bUsePawnControlRotation = true;
 
+
+
+    UE_LOG(LogTemp, Warning, TEXT("Created---"));
 }
 
 // Called when the game starts or when spawned
 void ACharacterMovement::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+    if (HealthBarClass)
+    {
+        /*
+        UE_LOG(LogTemp, Warning, TEXT("Adding to player screen"));
+        if (GetController<AGamePlayerController>() == nullptr)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("its null"));
+        }
+        //AGamePlayerController* PC = GetController<AGamePlayerController>();
+       check(PC);
+        PlayerHealthBar = CreateWidget<UHealthBar>(PC, HealthBarClass);
+        check(PlayerHealthBar);
+        PlayerHealthBar->AddToPlayerScreen();
+
+        UE_LOG(LogTemp, Warning, TEXT("Added to player screen"));*/
+    }
 }
+
+void ACharacterMovement::Setup()
+{
+    if (IsLocallyControlled())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Is Locally Controlled"));
+    }
+
+    if (HealthBarClass)
+    {
+        PC = GetController<AGamePlayerController>();
+        check(PC);
+        PlayerHealthBar = CreateWidget<UHealthBar>(PC, HealthBarClass);
+        check(PlayerHealthBar);
+        PlayerHealthBar->AddToPlayerScreen();
+
+        //Set Local Values For Health and Shield
+        currentHealth = maxHealth;
+        currentShield = maxShield;
+
+        //Set UI values For Health and Shield
+        PlayerHealthBar->SetHealth(1);
+        PlayerHealthBar->SetShield(1);
+
+        UE_LOG(LogTemp, Warning, TEXT("Added to player screen"));
+    }
+
+}
+
+void ACharacterMovement::EndPlay(const EEndPlayReason::Type EndPlayReason) 
+{
+
+    Super::EndPlay(EndPlayReason);
+    if (PlayerHealthBar)
+    {
+        PlayerHealthBar->RemoveFromParent();
+        PlayerHealthBar = nullptr;
+    }
+}
+
+ACharacterMovement::~ACharacterMovement()
+{
+
+}
+
 
 // Called every frame
 void ACharacterMovement::Tick(float DeltaTime)
@@ -134,4 +202,68 @@ void ACharacterMovement::Fire()
             }
         }
     }
+}
+
+void ACharacterMovement::CharacterTakeDamage(float value)
+{
+    DamageShield(value);
+}
+
+void ACharacterMovement::DamageShield(float value)
+{
+    float Difference = (currentShield - value);
+    if (Difference >= 0)
+    {
+        PlayerHealthBar->SetShield(Difference / maxShield);
+    }
+    else
+    {
+        PlayerHealthBar->SetShield(0);
+        DamageHealth((Difference * -1));
+    }
+}
+
+void ACharacterMovement::DamageHealth(float value)
+{
+    float Difference = (currentHealth - value);
+    if (Difference >= 0)
+    {
+        PlayerHealthBar->SetHealth(Difference / maxHealth);
+    }
+    else
+    {
+        PlayerHealthBar->SetHealth(0);
+        Die();
+    }
+}
+
+void ACharacterMovement::GainHealth(float value)
+{
+    float Addition = (currentHealth + value);
+    if (Addition >= maxHealth)
+    {
+        PlayerHealthBar->SetHealth(1);
+    }
+    else
+    {
+        PlayerHealthBar->SetHealth(Addition / maxHealth);
+    }
+}
+
+void ACharacterMovement::GainShield(float value)
+{
+    float Addition = (currentShield + value);
+    if (Addition >= maxShield)
+    {
+        PlayerHealthBar->SetShield(1);
+    }
+    else
+    {
+        PlayerHealthBar->SetShield(Addition / maxHealth);
+    }
+}
+
+void ACharacterMovement::Die()
+{
+    PC->Die();
 }

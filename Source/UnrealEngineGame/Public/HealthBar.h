@@ -17,34 +17,14 @@ class UNREALENGINEGAME_API UHealthBar : public UUserWidget
 
 public:
 
-	//Take Damage
-	void TakeDamage(float value);
-
-	//Damage To Health
-	void DamageHealth(float value);
-
-	//Damage to Sheild
-	void DamageShield(float value);
-
-	//Gain Health
-	void GainHealth(float value);
-
-	//Gain Sheild
-	void GainShield(float value);
+	void SetHealth(float value);
+	void SetShield(float value);
 
 private:
-
-	void Die();
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 		UProgressBar* HealthBar;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 		UProgressBar* ShieldBar;
-
-	UPROPERTY(EditAnywhere)
-		float maxHealth;
-
-	UPROPERTY(EditAnywhere)
-		float maxShield;
 };
