@@ -26,6 +26,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CharacterSelectionHelper(int characterIndex);
 
+	/*UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "User Interface|Viewport", meta = (AdvancedDisplay = "ZOrder"))
+	bool AddToPlayerScreen(int32 ZOrder = 0) override;*/
 
 private:
 	UFUNCTION()

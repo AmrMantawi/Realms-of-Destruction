@@ -38,6 +38,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UEntry> EntryClass;
 
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+		UTextBlock* UserNameText;
+
 	UPROPERTY()
 	class UEntry* SessionEntry;
 private:

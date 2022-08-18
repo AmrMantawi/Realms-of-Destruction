@@ -4,8 +4,11 @@
 
 void UCharacterSelectionMenu::CharacterSelectionHelper(int characterIndex)
 {
-	SelectedCharacter = CharacterList[characterIndex];
-	SelectCharacter();
+	if(CharacterList[characterIndex])
+	{
+		SelectedCharacter = CharacterList[characterIndex];
+		SelectCharacter();
+	}
 }
 
 
@@ -18,7 +21,7 @@ void UCharacterSelectionMenu::SelectCharacter()
 		{
 			PC->SelectCharacter(SelectedCharacter);
 			PC->SpawnCharacter();
-
+			PlayerPawn->Destroy();
 			this->SetVisibility(ESlateVisibility::Hidden);
 
 			/*
@@ -37,3 +40,8 @@ void UCharacterSelectionMenu::SelectCharacter()
 		}
 	}
 }
+
+//bool AddToPlayerScreen(int32 ZOrder = 0)
+//{
+//	Super::AddToPlayerScreen(ZOrder);
+//}

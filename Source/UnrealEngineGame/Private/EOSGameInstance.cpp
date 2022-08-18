@@ -53,6 +53,15 @@ void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, 
 		if (IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
 		{
 			Identity->ClearOnLoginCompleteDelegates(0, this);
+
+			PlayerUserName = Identity->GetPlayerNickname(UserId);
+
+			UE_LOG(LogTemp, Warning, TEXT("User Name: %s"), *PlayerUserName);
+
+			if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+			{
+				PC->ClientTravel("/Game/Maps/TestMenu", TRAVEL_Absolute);
+			}
 		}
 	}
 }
@@ -118,7 +127,11 @@ void UEOSGameInstance::DestroySession()
 			if (IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface())
 			{
 				SessionPtr->OnDestroySessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnDestroySessionComplete);
-				SessionPtr->DestroySession(TestSessionName);
+				SessionPtr->DestroySession(NAME_GameSession);
+				if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+				{
+					PC->ClientTravel("/Game/Maps/TestMenu", TRAVEL_Absolute);
+				}
 			}
 		}
 	}
@@ -143,6 +156,8 @@ void UEOSGameInstance::FindSessions(UPanelWidget* SessionPanel, TSubclassOf<clas
 		{
 			if (IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface())
 			{
+				SessionPanel->ClearChildren();
+
 				SearchSettings = MakeShareable(new FOnlineSessionSearch());
 				SearchSettings->MaxSearchResults = 5000;
 				SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
@@ -175,8 +190,8 @@ void UEOSGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 			SessionEntryPanel->AddChild(SessionEntry);
 			SessionEntry->Name->SetText(FText::FromString(UserSession.Session.OwningUserName));
 			SessionEntry->Capacity->SetText(FText::FromString(FString::FromInt(UserSession.Session.NumOpenPublicConnections)));
-			SessionEntry->JoinButton->OnClicked.AddDynamic(this, &UEOSGameInstance::JoinSessions);
 			SessionIndex = i;
+			SessionEntry->JoinButton->OnClicked.AddDynamic(this, &UEOSGameInstance::JoinSessions);
 		}
 	}
 

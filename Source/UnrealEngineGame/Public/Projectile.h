@@ -36,6 +36,12 @@ public:
 	// Function that initializes the projectile's velocity in the shoot direction.
 	void FireInDirection(const FVector& ShootDirection);
 
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+
+	UPROPERTY(EditAnywhere)
+	float damage;
+
 	/*
 	// Projectile mesh
 	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)

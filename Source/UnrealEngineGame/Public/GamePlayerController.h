@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "CharacterMovement.h"
-//#include "CharacterSelectionMenu.h"
 #include "GamePlayerController.generated.h"
 
 /**
@@ -17,7 +16,6 @@ class UNREALENGINEGAME_API AGamePlayerController : public APlayerController
 	GENERATED_BODY()
 		 
 public:
-
 
 	//Select Character
 	void SelectCharacter(TSubclassOf<ACharacterMovement> SelectedCharacterBlueprint);
@@ -35,27 +33,10 @@ public:
 
 	void Die();
 
-	//Toggle Character Selection Menu
-	//void ToggleCharacterSelectionMenu(bool toggle);
-
-	//Toggle Pause Menu
-	//void TogglePauseMenu(bool toggle);
-
-	//Toggle Mouse Visibility and Input Mode
-	void ToggleUIMode(bool toggle);
-
 private:
 
 	UPROPERTY()
 	TSubclassOf<class ACharacterMovement> SelectedCharacter;
 
 	ACharacterMovement* currentCharacter;
-
-	//UPROPERTY()
-	//TSubclassOf<class UCharacterSelectionMenu> SelectedCharacter;
-
-
-
-	FInputModeUIOnly UIOnly;
-	FInputModeGameOnly GameOnly;
 };

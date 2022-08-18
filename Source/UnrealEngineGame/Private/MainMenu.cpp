@@ -10,6 +10,10 @@
 void UMainMenu::MenuSetup()
 {
 	EOSInstance = GetGameInstance<UEOSGameInstance>();
+	if (EOSInstance)
+	{
+		UserNameText->SetText(FText::FromString(EOSInstance->PlayerUserName));
+	}
 }
 
 

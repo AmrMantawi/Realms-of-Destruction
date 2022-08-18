@@ -2,10 +2,27 @@
 
 
 #include "Projectile.h"
+#include "CharacterMovement.h"
 
 // Sets default values
 AProjectile::AProjectile()
 {
+	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
+	SetRootComponent(CollisionComponent);
+	CollisionComponent->SetSphereRadius(25.f);
+	CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
+	CollisionComponent->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+
+	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
+	ProjectileMovementComponent->InitialSpeed = 3000.0f;
+	ProjectileMovementComponent->MaxSpeed = 3000.0f;
+	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+	ProjectileMovementComponent->bShouldBounce = true;
+	ProjectileMovementComponent->Bounciness = 0.3f;
+	ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
+	InitialLifeSpan = 3.0f;
+
+	/*
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -38,7 +55,9 @@ AProjectile::AProjectile()
 
 	InitialLifeSpan = 3.0f;
 
-	/*
+
+
+	
 	if (!ProjectileMeshComponent)
 	{
 		ProjectileMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMeshComponent"));
@@ -71,3 +90,13 @@ void AProjectile::FireInDirection(const FVector& ShootDirection)
 	ProjectileMovementComponent->Velocity = ShootDirection * ProjectileMovementComponent->InitialSpeed;
 }
 
+void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
+{
+	ACharacterMovement* Target = Cast<ACharacterMovement>(OtherActor);
+	ACharacterMovement* Shooter = GetInstigator<ACharacterMovement>();
+	if (Target && Target != Shooter && Target->GetLocalRole() == ROLE_Authority)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit Player"));
+		Target->CharacterTakeDamage(damage);
+	}
+}

@@ -7,7 +7,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Projectile.h"
 #include "CharacterMovement.generated.h"
 
 UCLASS()
@@ -24,16 +23,48 @@ public:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	UFUNCTION()
 	void Setup();
 
+	UFUNCTION(Client, Reliable)
+	void Client_Setup();
+	void Client_Setup_Implementation();
+
+	//Toggle Character Selection Menu
+	UFUNCTION()
+	void ToggleCharacterSelectionMenu();
+
+	//Toggle Pause Menu
+	UFUNCTION()
+	void TogglePauseMenu();
+
+	virtual void PossessedBy(AController* NewController) override;
+
+	UPROPERTY()
+		class UPauseMenu* playerPauseMenu;
+
+	UPROPERTY()
+		class UCharacterSelectionMenu* playerCharacterSelection;
+
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<class UCharacterSelectionMenu> characterSelectionClass;
+
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<class UPauseMenu> PauseMenuClass;
+
+	UPROPERTY()
+		bool pauseMenuDisplayed = false;
+
+	UPROPERTY()
+		bool characterSelectionMenuDisplayed = false;
+
+	UFUNCTION()
+	void MenuMode();
+
+	UFUNCTION()
+	void PlayMode();
+
 private:
-	~ACharacterMovement();
-
-	UPROPERTY(EditAnywhere)
-		float maxHealth;
-
-	UPROPERTY(EditAnywhere)
-		float maxShield;
 
 	void Die();
 
@@ -74,27 +105,13 @@ public:
 
 	// FPS camera.
 	UPROPERTY(VisibleAnywhere)
-		UCameraComponent* FPSCameraComponent;
-
-	// Function that handles firing projectiles.
-	UFUNCTION()
-		void Fire();
-
-	// Gun muzzle offset from the camera location.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-		FVector MuzzleOffset;
-
-	//UPROPERTY(EditDefaultsOnly, Category = Projectile)
-		
-	// Projectile class to spawn.
-	UPROPERTY(EditDefaultsOnly, Category = Projectile)
-		TSubclassOf<class AProjectile> ProjectileClass;
+	UCameraComponent* FPSCameraComponent;
 
 	UPROPERTY(EditAnywhere)
-		TSubclassOf<class UHealthBar> HealthBarClass;
+	TSubclassOf<class UHealthBar> HealthBarClass;
 
 	UPROPERTY()
-		class UHealthBar* PlayerHealthBar;
+	class UHealthBar* PlayerHealthBar;
 
 	//Take Damage
 	void CharacterTakeDamage(float value);
@@ -111,11 +128,27 @@ public:
 	//Gain Sheild
 	void GainShield(float value);
 
-	float currentHealth;
-	float currentShield;
+	UFUNCTION(Reliable, Client)
+	void Client_SetHealth(float currentPlayerHealth);
+	void Client_SetHealth_Implementation(float currentPlayerHealth);
+
+	UFUNCTION(Reliable, Client)
+	void Client_SetShield(float currentPlayerShield);
+	void Client_SetShield_Implementation(float currentPlayerShield);
+
+	UPROPERTY(EditAnywhere)
+	int maxHealth = 420;
+
+	UPROPERTY(EditAnywhere)
+	int maxShield = 100.0f;
 
 	UPROPERTY()
-		class AGamePlayerController* GamePlayerController;
+	int currentHealth;
+	UPROPERTY()
+	int currentShield;
+
+	UPROPERTY()
+	class AGamePlayerController* GamePlayerController;
 
 	AGamePlayerController* PC;
 };

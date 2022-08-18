@@ -2,6 +2,9 @@
 
 
 #include "GamePlayerController.h"
+#include "Blueprint/UserWidget.h"
+#include "CharacterSelectionMenu.h"
+#include "PauseMenu.h"
 
 void AGamePlayerController::SelectCharacter(TSubclassOf<ACharacterMovement> SelectedCharacterBlueprint)
 {
@@ -20,6 +23,7 @@ void AGamePlayerController::Server_SelectCharacter_Implementation(TSubclassOf<AC
 
 void AGamePlayerController::SpawnCharacter()
 {
+	FInputModeGameOnly GameOnly;
 	this->SetInputMode(GameOnly);
 	this->SetShowMouseCursor(false);
 
@@ -30,7 +34,7 @@ void AGamePlayerController::SpawnCharacter()
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		currentCharacter = GetWorld()->SpawnActor<ACharacterMovement>(SelectedCharacter, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParameters);
 		this->Possess(currentCharacter);
-		currentCharacter->Setup();
+
 	}
 	else
 	{
@@ -43,65 +47,14 @@ void AGamePlayerController::Server_SpawnCharacter_Implementation(FVector Locatio
 	this->UnPossess();
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	APawn* character = GetWorld()->SpawnActor<APawn>(SelectedCharacter, Location, Rotation, SpawnParameters);
-	this->Possess(character);
-	//character->Setup();
-
-}
-
-
-/*
-void AGamePlayerController::ToggleCharacterSelectionMenu(bool toggle)
-{
-
-	//Toggle On
-	if (true)
-	{
-
-	}
-	//Toggle Off
-	else
-	{
-
-	}
-
-	ToggleUIMode(toggle);
-}
-
-void AGamePlayerController::TogglePauseMenu(bool toggle)
-{
-	//Toggle On
-	if (true)
-	{
-
-	}
-	//Toggle Off
-	else
-	{
-
-	}
-	ToggleUIMode(toggle);
-}
-*/
-
-void AGamePlayerController::ToggleUIMode(bool toggle)
-{
-	//Toggle On
-	if (true)
-	{
-		this->SetInputMode(UIOnly);
-		this->SetShowMouseCursor(true);
-	}
-	//Toggle Off
-	else
-	{
-		this->SetInputMode(GameOnly);
-		this->SetShowMouseCursor(false);
-	}
+	currentCharacter = GetWorld()->SpawnActor<ACharacterMovement>(SelectedCharacter, Location, Rotation, SpawnParameters);
+	this->Possess(currentCharacter);
 }
 
 void AGamePlayerController::Die()
 {
 	//Make Character Despawn After 5 seconds
-	currentCharacter->SetLifeSpan(5);
+	//currentCharacter->SetLifeSpan(5);
+	UE_LOG(LogTemp, Warning, TEXT("PC Dead"));
+
 }

@@ -58,6 +58,9 @@ public:
 	void JoinSessions();
 	void OnJoinSessionsComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
+	UPROPERTY(BlueprintReadOnly)
+	FString PlayerUserName;
+
 protected:
 	class IOnlineSubsystem* OnlineSubsystem;
 
