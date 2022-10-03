@@ -98,5 +98,6 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Hit Player"));
 		Target->CharacterTakeDamage(damage);
+		this->Destroy();
 	}
 }

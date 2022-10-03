@@ -29,6 +29,10 @@ void AGamePlayerController::SpawnCharacter()
 
 	if (HasAuthority())
 	{
+		if (this->GetPawn())
+		{
+			this->GetPawn()->Destroy();
+		}
 		this->UnPossess();
 		FActorSpawnParameters SpawnParameters;
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
@@ -44,6 +48,10 @@ void AGamePlayerController::SpawnCharacter()
 
 void AGamePlayerController::Server_SpawnCharacter_Implementation(FVector Location, FRotator Rotation)
 {
+	if (this->GetPawn())
+	{
+		this->GetPawn()->Destroy();
+	}
 	this->UnPossess();
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;

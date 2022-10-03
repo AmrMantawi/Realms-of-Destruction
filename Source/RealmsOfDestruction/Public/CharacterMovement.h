@@ -68,6 +68,8 @@ private:
 
 	void Die();
 
+	FTimerHandle timerHandle;
+
 
 public:	
 	// Called every frame
@@ -103,6 +105,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
 	float speedMultiplier = 2;
 
+	UPROPERTY()
+	float bonusSpeed = 1;
+
 	// FPS camera.
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* FPSCameraComponent;
@@ -128,6 +133,8 @@ public:
 	//Gain Sheild
 	void GainShield(float value);
 
+	void MultiplySpeed(float value);
+
 	UFUNCTION(Reliable, Client)
 	void Client_SetHealth(float currentPlayerHealth);
 	void Client_SetHealth_Implementation(float currentPlayerHealth);
@@ -135,6 +142,14 @@ public:
 	UFUNCTION(Reliable, Client)
 	void Client_SetShield(float currentPlayerShield);
 	void Client_SetShield_Implementation(float currentPlayerShield);
+
+	UFUNCTION(Reliable, Client)
+	void Client_SetSpeed(float playerSpeedMultiplier);
+	void Client_SetSpeed_Implementation(float playerSpeedMultiplier);
+
+	UFUNCTION(Reliable, Client)
+	void Client_ResetSpeed();
+	void Client_ResetSpeed_Implementation();
 
 	UPROPERTY(EditAnywhere)
 	int maxHealth = 420;

@@ -30,14 +30,6 @@ ACharacterMovement::ACharacterMovement()
 
     currentHealth = maxHealth;
     currentShield = maxShield;
-
-    UE_LOG(LogTemp, Warning, TEXT("currentHealth: %d"), currentHealth);
-    UE_LOG(LogTemp, Warning, TEXT("currentShield: %d"), currentShield);
-    UE_LOG(LogTemp, Warning, TEXT("maxHealth: %d"), maxHealth);
-    UE_LOG(LogTemp, Warning, TEXT("maxShield: %d"), maxShield);
-
-
-    UE_LOG(LogTemp, Warning, TEXT("Created---"));
 }
 
 // Called when the game starts or when spawned
@@ -125,12 +117,8 @@ void ACharacterMovement::ToggleCharacterSelectionMenu()
 
 void ACharacterMovement::TogglePauseMenu()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Toggle Pause Menu"));
-
     if (playerPauseMenu)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Pause Menu Exists"));
-
         if (!pauseMenuDisplayed)
         {
             if (characterSelectionMenuDisplayed)
@@ -144,16 +132,12 @@ void ACharacterMovement::TogglePauseMenu()
             playerPauseMenu->AddToPlayerScreen();
             pauseMenuDisplayed = true;
 
-            UE_LOG(LogTemp, Warning, TEXT("Toggle Pause Menu: On"));
-
             MenuMode();
         }
         else
         {
             playerPauseMenu->RemoveFromParent();
             pauseMenuDisplayed = false;
-            UE_LOG(LogTemp, Warning, TEXT("Toggle Pause Menu: Off"));
-
             PlayMode();
         }
     }
@@ -315,14 +299,18 @@ void ACharacterMovement::GainShield(float value)
     Client_SetShield(currentShield);
 }
 
+void ACharacterMovement::MultiplySpeed(float value)
+{
+    Client_SetSpeed(value);
+    GetWorldTimerManager().SetTimer(timerHandle, this, &ACharacterMovement::Client_ResetSpeed, 1.0f, false, 3.0f);
+}
+
 
 void ACharacterMovement::Client_SetHealth_Implementation(float currentPlayerHealth)
 {
     if (IsLocallyControlled() && PlayerHealthBar)
     {
         currentHealth = currentPlayerHealth;
-        UE_LOG(LogTemp, Warning, TEXT("Health Taking Damage"));
-        UE_LOG(LogTemp, Warning, TEXT("currentHealth: %d"), currentHealth);
         PlayerHealthBar->SetHealth(currentPlayerHealth / maxHealth);
     }
 }
@@ -331,11 +319,27 @@ void ACharacterMovement::Client_SetShield_Implementation(float currentPlayerShie
     if (IsLocallyControlled() && PlayerHealthBar)
     {
         currentShield = currentPlayerShield;
-        UE_LOG(LogTemp, Warning, TEXT("Shield Taking Damage"));
-        UE_LOG(LogTemp, Warning, TEXT("currentShield: %d"), currentShield);
         PlayerHealthBar->SetShield(currentPlayerShield / maxShield);
     }
 
+}
+
+void ACharacterMovement::Client_SetSpeed_Implementation(float playerSpeedMultiplier = 1)
+{
+    if (IsLocallyControlled())
+    {
+        bonusSpeed = playerSpeedMultiplier;
+        GetCharacterMovement()->MaxWalkSpeed *= bonusSpeed;
+        FPSCameraComponent->SetFieldOfView(100);
+    }
+}
+void ACharacterMovement::Client_ResetSpeed_Implementation()
+{
+    if (IsLocallyControlled())
+    {
+        GetCharacterMovement()->MaxWalkSpeed /= bonusSpeed;
+        FPSCameraComponent->SetFieldOfView(90);
+    }
 }
 
 void ACharacterMovement::MenuMode()

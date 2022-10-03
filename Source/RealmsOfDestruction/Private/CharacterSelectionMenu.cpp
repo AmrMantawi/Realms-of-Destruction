@@ -21,7 +21,6 @@ void UCharacterSelectionMenu::SelectCharacter()
 		{
 			PC->SelectCharacter(SelectedCharacter);
 			PC->SpawnCharacter();
-			PlayerPawn->Destroy();
 			this->SetVisibility(ESlateVisibility::Hidden);
 
 			/*
