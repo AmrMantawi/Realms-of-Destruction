@@ -13,5 +13,6 @@ UCLASS()
 class REALMSOFDESTRUCTION_API ABot : public ACharacterMovement
 {
 	GENERATED_BODY()
-	
+
+		ABot();
 };
