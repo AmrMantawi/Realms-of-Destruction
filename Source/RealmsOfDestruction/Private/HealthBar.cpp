@@ -6,15 +6,14 @@
 
 void UHealthBar::SetHealth(float value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Health Set: %d"), value);
+	UE_LOG(LogTemp, Warning, TEXT("Health Set: %f"), value);
 	float temp = (0.365 + (0.635 * value));
 	HealthBar->SetPercent(temp);
-
 }
 
 void UHealthBar::SetShield(float value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Shield Set: %d"), value);
+	UE_LOG(LogTemp, Warning, TEXT("Shield Set: %f"), value);
 	float temp = (0.365 + (0.41 * value));
 	ShieldBar->SetPercent(temp);
 }

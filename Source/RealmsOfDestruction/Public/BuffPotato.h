@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CharacterMovement.h"
-#include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
 #include "BuffPotato.generated.h"
 
 /**
@@ -20,26 +20,37 @@ public:
 
 	virtual void BeginPlay() override;
 
-	UPROPERTY(BlueprintReadOnly)
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+
+	UPROPERTY(replicated, BlueprintReadOnly)
 	bool isPunching = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = Hand)
-	USphereComponent* RightHand;
+	UBoxComponent* RightHand;
 
 	UPROPERTY(EditDefaultsOnly, Category = Hand)
-	USphereComponent* LeftHand;
+	UBoxComponent* LeftHand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Punch")
+	float PunchForce = 1000.0f;
+
+	/*UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);*/
 
 	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+	void OnPunchOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION()
-	void StartPunch();
+	UFUNCTION(Server, Reliable)
+	void Server_StartPunch();
+	void Server_StartPunch_Implementation();
 
-	UFUNCTION()
-	void StopPunch();
+	UFUNCTION(Server, Reliable)
+	void Server_StopPunch();
+	void Server_StopPunch_Implementation();
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Punch")
 	float damage;
 };

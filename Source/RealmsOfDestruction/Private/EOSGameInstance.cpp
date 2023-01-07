@@ -110,7 +110,7 @@ void UEOSGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucce
 			{
 				UWorld* World = GetWorld();
 				if (!ensure(World != nullptr)) return;
-				World->ServerTravel("/Game/Maps/FreeForAllLevel?listen");
+				World->ServerTravel("/Game/Maps/Arena?listen");
 			}
 			SessionPtr->StartSession(SessionName);
 			SessionPtr->ClearOnCreateSessionCompleteDelegates(this);

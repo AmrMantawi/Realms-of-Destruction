@@ -11,7 +11,7 @@ AProjectile::AProjectile()
 	SetRootComponent(CollisionComponent);
 	CollisionComponent->SetSphereRadius(25.f);
 	CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
-	CollisionComponent->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+	CollisionComponent->SetCollisionProfileName(TEXT("Projectile"));
 
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileMovementComponent->InitialSpeed = 3000.0f;
@@ -94,10 +94,20 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 {
 	ACharacterMovement* Target = Cast<ACharacterMovement>(OtherActor);
 	ACharacterMovement* Shooter = GetInstigator<ACharacterMovement>();
-	if (Target && Target != Shooter && Target->GetLocalRole() == ROLE_Authority)
+
+	if (Target && Target != Shooter)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit Player"));
-		Target->CharacterTakeDamage(damage);
+		if (Target->IsLocallyControlled())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Hit Player"));
+			Target->CharacterTakeDamage(damage);
+		}
+		if (HitSystem)
+		{
+			//UNiagaraFunctionLibrary
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitSystem, GetActorLocation());
+		}
+
 		this->Destroy();
 	}
 }

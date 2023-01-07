@@ -9,6 +9,14 @@
 #include "Components/CapsuleComponent.h"
 #include "CharacterMovement.generated.h"
 
+UENUM()
+enum class ECharacterState
+{
+	Normal,
+	Stunned,
+	Dead
+};
+
 UCLASS()
 class REALMSOFDESTRUCTION_API ACharacterMovement : public ACharacter
 {
@@ -18,10 +26,16 @@ public:
 	// Sets default values for this character's properties
 	ACharacterMovement();
 
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+
+
 
 	UFUNCTION()
 	void Setup();
@@ -29,6 +43,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_Setup();
 	void Client_Setup_Implementation();
+
+	UFUNCTION(Client, Reliable)
+	void Client_UnSetup();
+	void Client_UnSetup_Implementation();
 
 	//Toggle Character Selection Menu
 	UFUNCTION()
@@ -38,7 +56,11 @@ public:
 	UFUNCTION()
 	void TogglePauseMenu();
 
+	UFUNCTION()
 	virtual void PossessedBy(AController* NewController) override;
+
+	UFUNCTION()
+	virtual void UnPossessed() override;
 
 	UPROPERTY()
 		class UPauseMenu* playerPauseMenu;
@@ -64,9 +86,38 @@ public:
 	UFUNCTION()
 	void PlayMode();
 
-private:
+	UPROPERTY()
+	class USettingsMenu* playerSettingsMenu;
 
-	void Die();
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class USettingsMenu> SettingsMenuClass;
+
+	UPROPERTY()
+	bool settingsDisplayed = false;
+
+	UFUNCTION()
+	void ToggleSettingsMenu();
+
+	UFUNCTION()
+	void OnRep_HandleCharacterState();
+
+	UFUNCTION()
+	void setCharacterState(ECharacterState state);
+
+	UFUNCTION()
+	ECharacterState getCharacterState();
+
+
+private:
+	
+	UPROPERTY(ReplicatedUsing = OnRep_HandleCharacterState)
+		ECharacterState characterState;
+
+	UFUNCTION()
+		void Die();
+
+	UFUNCTION()
+	void DeadState();
 
 	FTimerHandle timerHandle;
 
@@ -88,25 +139,41 @@ public:
 
 	// Sets jump flag when key is pressed.
 	UFUNCTION()
-		void StartJump();
+		virtual void StartJump();
 
 	// Clears jump flag when key is released.
 	UFUNCTION()
-		void StopJump();
+		virtual void StopJump();
 
 	// Sets sprint flag when key is pressed.
 	UFUNCTION()
-		void StartSprint();
+		virtual void StartSprint();
 
 	// Clears sprint flag when key is released.
 	UFUNCTION()
-		void StopSprint();
+		virtual void StopSprint();
+
+
+	// Sets sprint flag when key is pressed.
+	UFUNCTION(Server, Reliable)
+		virtual void Server_StartSprint();
+		virtual void Server_StartSprint_Implementation();
+
+
+	// Clears sprint flag when key is released.
+	UFUNCTION(Server, Reliable)
+		virtual void Server_StopSprint();
+		virtual void Server_StopSprint_Implementation();
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
 	float speedMultiplier = 2;
 
 	UPROPERTY()
 	float bonusSpeed = 1;
+
+	UPROPERTY()
+	float bonusDamage = 1;
 
 	// FPS camera.
 	UPROPERTY(VisibleAnywhere)
@@ -133,15 +200,22 @@ public:
 	//Gain Sheild
 	void GainShield(float value);
 
+
 	void MultiplySpeed(float value);
 
-	UFUNCTION(Reliable, Client)
-	void Client_SetHealth(float currentPlayerHealth);
-	void Client_SetHealth_Implementation(float currentPlayerHealth);
+	void ResetSpeed();
+
+	void MultiplyDamage(float value);
+
+	void ResetDamage();
 
 	UFUNCTION(Reliable, Client)
-	void Client_SetShield(float currentPlayerShield);
-	void Client_SetShield_Implementation(float currentPlayerShield);
+	void Client_SetHealth();
+	void Client_SetHealth_Implementation();
+
+	UFUNCTION(Reliable, Client)
+	void Client_SetShield();
+	void Client_SetShield_Implementation();
 
 	UFUNCTION(Reliable, Client)
 	void Client_SetSpeed(float playerSpeedMultiplier);
@@ -151,16 +225,24 @@ public:
 	void Client_ResetSpeed();
 	void Client_ResetSpeed_Implementation();
 
-	UPROPERTY(EditAnywhere)
-	int maxHealth = 420;
+	UFUNCTION(Reliable, Client)
+	void Client_SetDamage(float playerDamageMultiplier);
+	void Client_SetDamage_Implementation(float playerDamageMultiplier);
+
+	UFUNCTION(Reliable, Client)
+	void Client_ResetDamage();
+	void Client_ResetDamage_Implementation();
 
 	UPROPERTY(EditAnywhere)
-	int maxShield = 100.0f;
+	float maxHealth = 100.0f;
 
-	UPROPERTY()
-	int currentHealth;
-	UPROPERTY()
-	int currentShield;
+	UPROPERTY(EditAnywhere)
+	float maxShield = 100.0f;
+
+	UPROPERTY(replicated)
+	float currentHealth;
+	UPROPERTY(replicated)
+	float currentShield;
 
 	UPROPERTY()
 	class AGamePlayerController* GamePlayerController;

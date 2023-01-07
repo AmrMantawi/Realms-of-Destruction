@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Projectile.generated.h"
 
@@ -42,6 +44,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	float damage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UNiagaraSystem* HitSystem;
 	/*
 	// Projectile mesh
 	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)

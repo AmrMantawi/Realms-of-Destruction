@@ -7,6 +7,13 @@
 #include "Components/SphereComponent.h"
 #include "Item.generated.h"
 
+UENUM()
+enum class EItemState
+{
+	Active,
+	Inactive
+};
+
 UCLASS()
 class REALMSOFDESTRUCTION_API AItem : public AActor
 {
@@ -16,8 +23,14 @@ public:
 	// Sets default values for this actor's properties
 	AItem();
 
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USphereComponent* CollisionComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* MeshComponent;
 
 	UPROPERTY(EditAnywhere)
 	bool health;
@@ -37,8 +50,21 @@ public:
 	UPROPERTY(EditAnywhere)
 	int speedValue;
 
+	UPROPERTY(ReplicatedUsing = OnRep_HandleItemState)
+		EItemState itemState;
+
+	UFUNCTION()
+	void OnRep_HandleItemState();
+
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION()
+	void Deactivate();
+	
+	UFUNCTION()
+	void Activate();
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -49,3 +75,4 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 };
+

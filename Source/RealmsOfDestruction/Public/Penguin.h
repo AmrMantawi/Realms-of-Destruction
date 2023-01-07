@@ -21,8 +21,14 @@ class REALMSOFDESTRUCTION_API APenguin : public ACharacterMovement
 	void Fire();
 
 	UFUNCTION(Reliable, Server)
-	void Server_Fire();
-	void Server_Fire_Implementation();
+	void Server_Fire(FVector MuzzleLocation, FRotator MuzzleRotation);
+	void Server_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation);
+
+	UFUNCTION(Reliable, NetMulticast)
+	void Multicast_Fire(FVector MuzzleLocation, FRotator MuzzleRotation);
+	void Multicast_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation);
+
+	void Shoot(FVector MuzzleLocation, FRotator MuzzleRotation);
 
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
@@ -33,4 +39,5 @@ class REALMSOFDESTRUCTION_API APenguin : public ACharacterMovement
 	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class AProjectile> ProjectileClass;
+
 };

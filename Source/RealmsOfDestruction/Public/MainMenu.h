@@ -41,6 +41,9 @@ public:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 		UTextBlock* UserNameText;
 
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UButton* SettingsButton;
+
 	UPROPERTY()
 	class UEntry* SessionEntry;
 private:

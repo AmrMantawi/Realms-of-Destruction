@@ -5,6 +5,19 @@
 #include "Blueprint/UserWidget.h"
 #include "CharacterSelectionMenu.h"
 #include "PauseMenu.h"
+#include "CharacterMovement.h"
+#include "Net/UnrealNetwork.h"
+
+AGamePlayerController::AGamePlayerController()
+{
+	bReplicates = true;
+}
+
+void AGamePlayerController::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AGamePlayerController, currentCharacter);
+}
 
 void AGamePlayerController::SelectCharacter(TSubclassOf<ACharacterMovement> SelectedCharacterBlueprint)
 {
@@ -26,43 +39,52 @@ void AGamePlayerController::SpawnCharacter()
 	FInputModeGameOnly GameOnly;
 	this->SetInputMode(GameOnly);
 	this->SetShowMouseCursor(false);
+	Server_SpawnCharacter(FVector::ZeroVector, FRotator::ZeroRotator);
 
-	if (HasAuthority())
-	{
-		if (this->GetPawn())
-		{
-			this->GetPawn()->Destroy();
-		}
-		this->UnPossess();
-		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		currentCharacter = GetWorld()->SpawnActor<ACharacterMovement>(SelectedCharacter, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParameters);
-		this->Possess(currentCharacter);
+	//if (HasAuthority())
+	//{
+	//	if (this->GetPawn())
+	//	{
+	//		this->GetPawn()->Destroy();
+	//	}
+	//	this->UnPossess();
+	//	FActorSpawnParameters SpawnParameters;
+	//	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	//	currentCharacter = GetWorld()->SpawnActor<ACharacterMovement>(SelectedCharacter, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParameters);
+	//	this->Possess(currentCharacter);
 
-	}
-	else
-	{
-		Server_SpawnCharacter(FVector::ZeroVector, FRotator::ZeroRotator);
-	}
+	//}
+	//else
+	//{
+
+	//}
 }
 
 void AGamePlayerController::Server_SpawnCharacter_Implementation(FVector Location, FRotator Rotation)
 {
-	if (this->GetPawn())
+	if (!currentCharacter && this->GetPawn())
 	{
 		this->GetPawn()->Destroy();
 	}
 	this->UnPossess();
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	currentCharacter = GetWorld()->SpawnActor<ACharacterMovement>(SelectedCharacter, Location, Rotation, SpawnParameters);
-	this->Possess(currentCharacter);
+	if (currentCharacter)
+	{
+		ACharacterMovement* newCharacter = GetWorld()->SpawnActor<ACharacterMovement>(SelectedCharacter, Location, Rotation, SpawnParameters);
+		this->Possess(newCharacter);
+		currentCharacter->setCharacterState(ECharacterState::Dead);
+		currentCharacter = newCharacter;
+
+	}
+	else {
+		currentCharacter = GetWorld()->SpawnActor<ACharacterMovement>(SelectedCharacter, Location, Rotation, SpawnParameters);
+		this->Possess(currentCharacter);
+	}
+
 }
 
 void AGamePlayerController::Die()
 {
-	//Make Character Despawn After 5 seconds
-	//currentCharacter->SetLifeSpan(5);
-	UE_LOG(LogTemp, Warning, TEXT("PC Dead"));
-
+	Server_SpawnCharacter(FVector::ZeroVector, FRotator::ZeroRotator);
 }

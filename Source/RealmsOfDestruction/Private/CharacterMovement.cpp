@@ -6,8 +6,10 @@
 #include "HealthBar.h"
 #include "GamePlayerController.h"
 #include "CharacterSelectionMenu.h"
+#include "SettingsMenu.h"
 #include "PauseMenu.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ACharacterMovement::ACharacterMovement()
@@ -27,9 +29,19 @@ ACharacterMovement::ACharacterMovement()
 
     // Enable the pawn to control camera rotation.
     FPSCameraComponent->bUsePawnControlRotation = true;
+    bReplicates = true;
 
-    currentHealth = maxHealth;
-    currentShield = maxShield;
+    characterState = ECharacterState::Normal;
+}
+
+void ACharacterMovement::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(ACharacterMovement, currentHealth);
+    DOREPLIFETIME(ACharacterMovement, currentShield);
+    DOREPLIFETIME(ACharacterMovement, characterState);
+
+
 }
 
 // Called when the game starts or when spawned
@@ -37,33 +49,54 @@ void ACharacterMovement::BeginPlay()
 {
 	Super::BeginPlay();
 }
+
 void ACharacterMovement::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
     Setup();
 }
 
+void ACharacterMovement::UnPossessed()
+{
+    Client_UnSetup_Implementation();
+    Super::UnPossessed();
+}
+
+
 void ACharacterMovement::Setup()
 {
-    //if (IsLocallyControlled())
-    //{
-    //    if (HealthBarClass)
-    //    {
-    //        PC = GetController<AGamePlayerController>();
-    //        check(PC);
-    //        PlayerHealthBar = CreateWidget<UHealthBar>(PC, HealthBarClass);
-    //        check(PlayerHealthBar);
-    //        PlayerHealthBar->AddToPlayerScreen();
-
-    //        //Set UI values For Health and Shield
-    //        PlayerHealthBar->SetHealth(1);
-    //        PlayerHealthBar->SetShield(1);
-    //    }
-    //}
-    //else
-    //{
         Client_Setup();
-    //}
+
+        currentHealth = maxHealth;
+        currentShield = maxShield;
+}
+
+void ACharacterMovement::Client_UnSetup_Implementation()
+{
+    if (IsLocallyControlled())
+    {
+        if (PlayerHealthBar)
+        {
+            PlayerHealthBar->RemoveFromParent();
+            PlayerHealthBar = nullptr;
+        }
+        if (playerPauseMenu)
+        {
+            playerPauseMenu->RemoveFromParent();
+            playerPauseMenu = nullptr;
+        }
+        if (playerSettingsMenu)
+        {
+            playerSettingsMenu->RemoveFromParent();
+            playerSettingsMenu = nullptr;
+        }
+        if (playerCharacterSelection)
+        {
+            playerCharacterSelection->RemoveFromParent();
+            playerCharacterSelection = nullptr;
+        }
+    }
+
 }
 
 void ACharacterMovement::Client_Setup_Implementation()
@@ -91,11 +124,18 @@ void ACharacterMovement::Client_Setup_Implementation()
 
     if (PauseMenuClass)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Creating Pause Menu"));
+        if (SettingsMenuClass)
+        {
+            //Create Pause Menu
+            playerSettingsMenu = CreateWidget<USettingsMenu>(PC, SettingsMenuClass);
+        }
         playerPauseMenu = CreateWidget<UPauseMenu>(PC, PauseMenuClass);
         playerPauseMenu->Resume->OnClicked.AddDynamic(this, &ACharacterMovement::TogglePauseMenu);
+        playerPauseMenu->Settings->OnClicked.AddDynamic(this, &ACharacterMovement::ToggleSettingsMenu);
         playerPauseMenu->ChangeCharacter->OnClicked.AddDynamic(this, &ACharacterMovement::ToggleCharacterSelectionMenu);
+
     }
+
 }
 
 void ACharacterMovement::ToggleCharacterSelectionMenu()
@@ -121,6 +161,7 @@ void ACharacterMovement::TogglePauseMenu()
     {
         if (!pauseMenuDisplayed)
         {
+            //Display Pause Menu
             if (characterSelectionMenuDisplayed)
             {
                 playerPauseMenu->ChangeCharacter->SetVisibility(ESlateVisibility::Hidden);
@@ -136,12 +177,40 @@ void ACharacterMovement::TogglePauseMenu()
         }
         else
         {
-            playerPauseMenu->RemoveFromParent();
-            pauseMenuDisplayed = false;
-            PlayMode();
+            //Hide Pause Menu
+            if (settingsDisplayed)
+            {
+                ToggleSettingsMenu();
+            }
+            else if (characterSelectionMenuDisplayed)
+            {
+                ToggleCharacterSelectionMenu();
+            }
+            else {
+                playerPauseMenu->RemoveFromParent();
+                pauseMenuDisplayed = false;
+                PlayMode();
+            }
         }
     }
 }
+void ACharacterMovement::ToggleSettingsMenu()
+{
+    if (playerSettingsMenu)
+    {
+        if (!settingsDisplayed)
+        {
+            playerSettingsMenu->AddToPlayerScreen();
+            settingsDisplayed = true;
+        }
+        else
+        {
+            playerSettingsMenu->RemoveFromParent();
+            settingsDisplayed = false;
+        }
+    }
+}
+
 
 void ACharacterMovement::EndPlay(const EEndPlayReason::Type EndPlayReason) 
 {
@@ -156,6 +225,11 @@ void ACharacterMovement::EndPlay(const EEndPlayReason::Type EndPlayReason)
     {
         playerPauseMenu->RemoveFromParent();
         playerPauseMenu = nullptr;
+    }
+    if (playerSettingsMenu)
+    {
+        playerSettingsMenu->RemoveFromParent();
+        playerSettingsMenu = nullptr;
     }
     if (playerCharacterSelection)
     {
@@ -221,9 +295,21 @@ void ACharacterMovement::StopJump()
 void ACharacterMovement::StartSprint()
 {
     GetCharacterMovement()->MaxWalkSpeed *= speedMultiplier;
+    Server_StartSprint();
 }
 
 void ACharacterMovement::StopSprint()
+{
+    GetCharacterMovement()->MaxWalkSpeed /= speedMultiplier;
+    Server_StopSprint();
+}
+
+void ACharacterMovement::Server_StartSprint_Implementation()
+{
+    GetCharacterMovement()->MaxWalkSpeed *= speedMultiplier;
+}
+
+void ACharacterMovement::Server_StopSprint_Implementation()
 {
     GetCharacterMovement()->MaxWalkSpeed /= speedMultiplier;
 }
@@ -231,7 +317,8 @@ void ACharacterMovement::StopSprint()
 void ACharacterMovement::CharacterTakeDamage(float value)
 {
     UE_LOG(LogTemp, Warning, TEXT("Taking Damage"));
-    if (HasAuthority())
+    //Damage Sheild First
+    //if (HasAuthority())
     {
         DamageShield(value);
     }
@@ -239,50 +326,59 @@ void ACharacterMovement::CharacterTakeDamage(float value)
 
 void ACharacterMovement::DamageShield(float value)
 {
-    float Difference = (currentShield - value);
-    if (Difference >= 0)
-    {
-        currentShield = Difference;
+    float difference = (currentShield - value);
+    
+    //Sheild is still left
+    if (difference > 0)
+    { 
+        currentShield = difference;
     }
     else
     {
+        //Damage health with remaining damage
         currentShield = 0;
-        DamageHealth((Difference * -1));
+        if (difference < 0)
+        {
+            DamageHealth((difference * -1));
+        }
     }
-
-    Client_SetShield(currentShield);
+    Client_SetShield();
 }
 
 void ACharacterMovement::DamageHealth(float value)
 {
-    float Difference = (currentHealth - value);
-    if (Difference >= 0)
+    float difference = (currentHealth - value);
+    //Health iis still left
+    if (difference > 0)
     {
-        currentHealth = Difference;
+        currentHealth = difference;
     }
     else
     {
+        //Character dies
         currentHealth = 0;
-        if(HasAuthority())
+        if (difference < 0)
         {
             Die();
         }
     }
-    Client_SetHealth(currentHealth);
+    Client_SetHealth();
 }
 
 void ACharacterMovement::GainHealth(float value)
 {
     float Addition = (currentHealth + value);
+    //Maximum health is reached
     if (Addition >= maxHealth)
     {
         currentHealth = maxHealth;
     }
+    //Maximum Health is not reached
     else
     {
         currentHealth = Addition;
     }
-    Client_SetHealth(currentHealth);
+    Client_SetHealth();
 }
 
 void ACharacterMovement::GainShield(float value)
@@ -296,32 +392,97 @@ void ACharacterMovement::GainShield(float value)
     {
         currentShield = Addition;
     }
-    Client_SetShield(currentShield);
+    Client_SetShield();
+}
+//
+
+void ACharacterMovement::MultiplyDamage(float value)
+{
+    if (HasAuthority())
+    {
+        //Server
+        bonusDamage *= value;
+        UE_LOG(LogTemp, Warning, TEXT("Server Damage"));
+
+        if (!IsLocallyControlled())
+        {
+            //Client
+            UE_LOG(LogTemp, Warning, TEXT("Client Damage"));
+            Client_SetDamage(value);
+        }
+        GetWorldTimerManager().SetTimer(timerHandle, this, &ACharacterMovement::ResetDamage, 1.0f, false, 3.0f);
+    }
 }
 
+void ACharacterMovement::ResetDamage()
+{
+    if (HasAuthority())
+    {
+        //Server
+        bonusDamage = 1;
+        if (!IsLocallyControlled())
+        {
+            //Client
+            Client_ResetDamage();
+
+        }
+    }
+}
+
+void ACharacterMovement::Client_SetDamage_Implementation(float playerDamageMultiplier = 1)
+{
+    if (IsLocallyControlled())
+    {
+        bonusDamage = playerDamageMultiplier;
+    }
+}
+
+void ACharacterMovement::Client_ResetDamage_Implementation()
+{
+    if (IsLocallyControlled())
+    {
+        GetCharacterMovement()->MaxWalkSpeed /= bonusDamage;
+    }
+}
+
+
+//
 void ACharacterMovement::MultiplySpeed(float value)
 {
-    Client_SetSpeed(value);
-    GetWorldTimerManager().SetTimer(timerHandle, this, &ACharacterMovement::Client_ResetSpeed, 1.0f, false, 3.0f);
+    if (HasAuthority())
+    {
+        //Server
+        GetCharacterMovement()->MaxWalkSpeed /= bonusSpeed;
+        bonusSpeed *= value;
+        GetCharacterMovement()->MaxWalkSpeed *= bonusSpeed;
+        FPSCameraComponent->SetFieldOfView(100);
+        UE_LOG(LogTemp, Warning, TEXT("Server Speed"));
+
+        if (!IsLocallyControlled())
+        {
+            //Client
+            UE_LOG(LogTemp, Warning, TEXT("Client Speed"));
+            Client_SetSpeed(value);
+        }
+        GetWorldTimerManager().SetTimer(timerHandle, this, &ACharacterMovement::ResetSpeed, 1.0f, false, 3.0f);
+    }    
 }
 
-
-void ACharacterMovement::Client_SetHealth_Implementation(float currentPlayerHealth)
+void ACharacterMovement::ResetSpeed()
 {
-    if (IsLocallyControlled() && PlayerHealthBar)
+    if (HasAuthority())
     {
-        currentHealth = currentPlayerHealth;
-        PlayerHealthBar->SetHealth(currentPlayerHealth / maxHealth);
-    }
-}
-void ACharacterMovement::Client_SetShield_Implementation(float currentPlayerShield)
-{
-    if (IsLocallyControlled() && PlayerHealthBar)
-    {
-        currentShield = currentPlayerShield;
-        PlayerHealthBar->SetShield(currentPlayerShield / maxShield);
-    }
+        //Server
+        GetCharacterMovement()->MaxWalkSpeed /= bonusSpeed;
+        bonusSpeed = 1;
+        FPSCameraComponent->SetFieldOfView(90);
+        if (!IsLocallyControlled())
+        {
+            //Client
+            Client_ResetSpeed();
 
+        }
+    }
 }
 
 void ACharacterMovement::Client_SetSpeed_Implementation(float playerSpeedMultiplier = 1)
@@ -333,6 +494,7 @@ void ACharacterMovement::Client_SetSpeed_Implementation(float playerSpeedMultipl
         FPSCameraComponent->SetFieldOfView(100);
     }
 }
+
 void ACharacterMovement::Client_ResetSpeed_Implementation()
 {
     if (IsLocallyControlled())
@@ -341,6 +503,27 @@ void ACharacterMovement::Client_ResetSpeed_Implementation()
         FPSCameraComponent->SetFieldOfView(90);
     }
 }
+
+
+
+
+void ACharacterMovement::Client_SetHealth_Implementation()
+{
+    if (IsLocallyControlled() && PlayerHealthBar)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Health Set: %f"), currentHealth);
+        PlayerHealthBar->SetHealth((currentHealth > 0) ? currentHealth / maxHealth : 0);
+    }
+}
+void ACharacterMovement::Client_SetShield_Implementation()
+{
+    if (IsLocallyControlled() && PlayerHealthBar)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Shield Set: %f"), currentShield);
+        PlayerHealthBar->SetShield((currentShield > 0) ? currentShield / maxShield : 0);
+    }
+}
+
 
 void ACharacterMovement::MenuMode()
 {
@@ -369,8 +552,47 @@ void ACharacterMovement::PlayMode()
 
 }
 
+
+
+//Character State getter and setter
+void ACharacterMovement::setCharacterState(ECharacterState state)
+{
+    characterState = state;
+    OnRep_HandleCharacterState();
+}
+
+ECharacterState ACharacterMovement::getCharacterState()
+{
+    return characterState;
+}
+
+//Handle Each Character State
+void ACharacterMovement::OnRep_HandleCharacterState()
+{
+    if (characterState == ECharacterState::Dead)
+    {
+        DeadState();
+    }
+}
+
+
 void ACharacterMovement::Die()
 {
     UE_LOG(LogTemp, Warning, TEXT("Dead"));
-    PC->Die();
+    //if (HasAuthority())
+    {
+        PC->Die();
+    }
+}
+
+void ACharacterMovement::DeadState()
+{
+    this->GetMesh()->SetSimulatePhysics(true);
+    this->GetMesh()->SetCollisionProfileName(TEXT("PhysicsActor"));
+    this->GetMesh()->SetOwnerNoSee(false);
+
+    if (HasAuthority())
+    {
+        this->SetLifeSpan(5);
+    }
 }

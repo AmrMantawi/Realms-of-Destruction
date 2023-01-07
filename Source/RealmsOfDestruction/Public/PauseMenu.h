@@ -23,5 +23,8 @@ public:
 	UButton* ChangeCharacter;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UButton* Settings;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UButton* Quit;
 };
