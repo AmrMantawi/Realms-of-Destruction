@@ -26,10 +26,10 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USphereComponent* CollisionComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* MeshComponent;
 
 	UPROPERTY(EditAnywhere)
@@ -65,6 +65,11 @@ public:
 	UFUNCTION()
 	void Activate();
 
+	UPROPERTY(EditAnywhere)
+	float respawnTime = 2.0f;
+
+	UPROPERTY()
+	FTimerHandle PickupRespawnTimer;
 
 protected:
 	// Called when the game starts or when spawned

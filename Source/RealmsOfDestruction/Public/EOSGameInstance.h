@@ -12,6 +12,7 @@
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Entry.h"
+#include "EntryJoin.h"
 #include "EOSGameInstance.generated.h"
 
 /**
@@ -32,7 +33,7 @@ public:
 	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 
 	UFUNCTION(BlueprintCallable)
-	void CreateSession();
+	void CreateSession(int capacity, FString SessionName, FString map, FString Description);
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 
 	UFUNCTION(BlueprintCallable)
@@ -44,6 +45,9 @@ public:
 	void OnFindSessionsComplete(bool bWasSuccessful);
 	TSharedPtr<class FOnlineSessionSearch> SearchSettings;
 
+	UFUNCTION(BlueprintCallable)
+	void PlayersInSession();
+
 	UPanelWidget* SessionEntryPanel;
 
 	UPROPERTY()
@@ -52,10 +56,9 @@ public:
 	UPROPERTY()
 	class UEntry* SessionEntry;
 
-	int SessionIndex;
+	int mapIndex;
 
-	UFUNCTION()
-	void JoinSessions();
+	void JoinSessions(FOnlineSessionSearchResult searchResult);
 	void OnJoinSessionsComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 	UPROPERTY(BlueprintReadOnly)
@@ -63,6 +66,8 @@ public:
 
 	UFUNCTION()
 	bool GetLoginStatus();
+
+
 protected:
 	class IOnlineSubsystem* OnlineSubsystem;
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CharacterMovement.h"
+#include "Projectile.h"
 #include "Bot.generated.h"
 
 /**
@@ -16,6 +17,8 @@ class REALMSOFDESTRUCTION_API ABot : public ACharacterMovement
 
 public: 
 	ABot();
+
+	virtual void BeginPlay() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
@@ -35,6 +38,20 @@ public:
 	// Clears sprint flag when key is released.
 	virtual void StopSprint() override;
 
+	UPROPERTY(EditDefaultsOnly)
+	float fireRate = 0.15f;
+	
+	UPROPERTY(Replicated)
+	bool isShooting;
+
+	UFUNCTION()
+	void Fire();
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	class USceneComponent* MuzzleLocationL;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	class USceneComponent* MuzzleLocationR;
 
 	// Sets sprint flag when key is pressed.
 	virtual void Server_StartSprint_Implementation() override;
@@ -45,6 +62,20 @@ public:
 
 	UFUNCTION()
 	void Fall();
+
+	// Projectile class to spawn.
+	UPROPERTY(EditDefaultsOnly, Category = Projectile)
+		TSubclassOf<class AProjectile> ProjectileClass;
+
+	UFUNCTION(Reliable, Server)
+		void Server_Fire(FVector MuzzleLocation, FRotator MuzzleRotation);
+	void Server_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation);
+
+	UFUNCTION(Reliable, NetMulticast)
+		void Multicast_Fire(FVector MuzzleLocation, FRotator MuzzleRotation);
+	void Multicast_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation);
+
+	void Shoot(FVector MuzzleLocation, FRotator MuzzleRotation);
 
 private:
 	UPROPERTY(Replicated)

@@ -32,6 +32,7 @@ class REALMSOFDESTRUCTION_API APenguin : public ACharacterMovement
 
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
+
 	// Gun muzzle offset from the camera location.
 	UPROPERTY(EditAnywhere)
 	FVector MuzzleOffset = FVector(40.f, 0.f, -50.f);

@@ -6,6 +6,7 @@
 #include "HealthBar.h"
 #include "GamePlayerController.h"
 #include "CharacterSelectionMenu.h"
+#include "PlayesrDisplay.h"
 #include "SettingsMenu.h"
 #include "PauseMenu.h"
 #include "Kismet/GameplayStatics.h"
@@ -95,6 +96,11 @@ void ACharacterMovement::Client_UnSetup_Implementation()
             playerCharacterSelection->RemoveFromParent();
             playerCharacterSelection = nullptr;
         }
+        if (playersMenu)
+        {
+            playersMenu->RemoveFromParent();
+            playersMenu = nullptr;
+        }
     }
 
 }
@@ -135,7 +141,11 @@ void ACharacterMovement::Client_Setup_Implementation()
         playerPauseMenu->ChangeCharacter->OnClicked.AddDynamic(this, &ACharacterMovement::ToggleCharacterSelectionMenu);
 
     }
-
+    if (PlayersMenuClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Creating Selection Menu"));
+        playersMenu = CreateWidget<UPlayesrDisplay>(PC, PlayersMenuClass);
+    }
 }
 
 void ACharacterMovement::ToggleCharacterSelectionMenu()
@@ -211,6 +221,29 @@ void ACharacterMovement::ToggleSettingsMenu()
     }
 }
 
+void ACharacterMovement::TogglePlayersMenu()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Player button pressed"));
+
+    if (playersMenu)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("players menu"));
+
+        if (!playersMenuDisplayed)
+        {
+            playersMenu->AddToPlayerScreen();
+            playersMenuDisplayed = true;
+            UE_LOG(LogTemp, Warning, TEXT("Display now..."));
+        }
+        else
+        {
+            playersMenu->RemoveFromParent();
+            playersMenuDisplayed = false;
+        }
+    }
+}
+
+
 
 void ACharacterMovement::EndPlay(const EEndPlayReason::Type EndPlayReason) 
 {
@@ -235,6 +268,11 @@ void ACharacterMovement::EndPlay(const EEndPlayReason::Type EndPlayReason)
     {
         playerCharacterSelection->RemoveFromParent();
         playerCharacterSelection = nullptr;
+    }
+    if (playersMenu)
+    {
+        playersMenu->RemoveFromParent();
+        playersMenu = nullptr;
     }
 }
 
@@ -265,7 +303,9 @@ void ACharacterMovement::SetupPlayerInputComponent(UInputComponent* PlayerInputC
     PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACharacterMovement::StartSprint);
     PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACharacterMovement::StopSprint);
 
+    PlayerInputComponent->BindAction("Player", IE_Pressed, this, &ACharacterMovement::TogglePlayersMenu);
     PlayerInputComponent->BindAction("Pause Game", IE_Pressed, this, &ACharacterMovement::TogglePauseMenu);
+
 }
 
 void ACharacterMovement::MoveForward(float Value)

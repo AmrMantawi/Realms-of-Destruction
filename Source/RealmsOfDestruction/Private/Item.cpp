@@ -17,10 +17,12 @@ AItem::AItem()
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	SetRootComponent(CollisionComponent);
 	MeshComponent->SetupAttachment(CollisionComponent);
-	CollisionComponent->SetSphereRadius(25.f);
-	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnHit);
 	CollisionComponent->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
+	CollisionComponent->SetSphereRadius(25.f);
+
+	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnHit);
 	
+	bReplicates = true;
 
 }
 
@@ -34,6 +36,7 @@ void AItem::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeP
 void AItem::BeginPlay()
 {
 	Super::BeginPlay();
+
 	itemState = EItemState::Active;
 }
 
@@ -46,12 +49,15 @@ void AItem::Tick(float DeltaTime)
 
 void AItem::OnRep_HandleItemState()
 {
+
 	if (itemState == EItemState::Active)
 	{
+
 		Activate();
 	}
 	else if (itemState == EItemState::Inactive)
 	{
+
 		Deactivate();
 	}
 }
@@ -88,8 +94,11 @@ void AItem::OnHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrim
 
 void AItem::Activate()
 {
+	MeshComponent->SetVisibility(true);
+
 	if (HasAuthority())
 	{
+
 		itemState = EItemState::Active;
 	}
 
@@ -98,11 +107,17 @@ void AItem::Activate()
 
 void AItem::Deactivate()
 {
+	MeshComponent->SetVisibility(false);
+
+
 	if (HasAuthority())
 	{
+
 		itemState = EItemState::Inactive;
 
 		//Activate timer
+		GetWorld()->GetTimerManager().SetTimer(PickupRespawnTimer, this, &AItem::Activate, respawnTime, false);
+
 	}
 }
 

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
-#include "Components/Button.h"
+#include "EntryJoin.h"
 #include "Entry.generated.h"
 
 /**
@@ -17,12 +17,20 @@ class REALMSOFDESTRUCTION_API UEntry : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-		UTextBlock* Name;
+		UTextBlock* SessionName;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+		UTextBlock* HostName;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 		UTextBlock* Capacity;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-		UButton* JoinButton;
+		UTextBlock* Description;
+
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+		UEntryJoin* JoinButton;
 };

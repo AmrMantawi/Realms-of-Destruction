@@ -42,7 +42,6 @@ void APenguin::Fire()
             }
             else if (!HasAuthority())
             {
-                Shoot(MuzzleLocation, MuzzleRotation);
                 //Client
                 Server_Fire(MuzzleLocation, MuzzleRotation);
             }
@@ -54,7 +53,7 @@ void APenguin::Fire()
 
 void APenguin::Server_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation)
 {
-    Shoot(MuzzleLocation, MuzzleRotation);
+    Multicast_Fire(MuzzleLocation, MuzzleRotation);
 }
 
 

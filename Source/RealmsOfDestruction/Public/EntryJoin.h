@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/Button.h"
+#include "OnlineSessionSettings.h"
 #include "EntryJoin.generated.h"
 
 /**
@@ -14,4 +15,13 @@ UCLASS()
 class REALMSOFDESTRUCTION_API UEntryJoin : public UButton
 {
 	GENERATED_BODY()
+
+public:
+	UEntryJoin();
+
+	FOnlineSessionSearchResult searchResult;
+
+	UFUNCTION()
+	void JoinSession();
 };
+

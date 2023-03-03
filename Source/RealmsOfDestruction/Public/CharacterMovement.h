@@ -67,18 +67,28 @@ public:
 
 	UPROPERTY()
 		class UCharacterSelectionMenu* playerCharacterSelection;
+	UPROPERTY()
+	class UPlayesrDisplay* playersMenu;
 
 	UPROPERTY(EditAnywhere)
 		TSubclassOf<class UCharacterSelectionMenu> characterSelectionClass;
 
 	UPROPERTY(EditAnywhere)
 		TSubclassOf<class UPauseMenu> PauseMenuClass;
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<class UPlayesrDisplay> PlayersMenuClass;
 
 	UPROPERTY()
 		bool pauseMenuDisplayed = false;
 
 	UPROPERTY()
 		bool characterSelectionMenuDisplayed = false;
+
+	UPROPERTY()
+		bool playersMenuDisplayed = false;
+
+	UFUNCTION()
+		void TogglePlayersMenu();
 
 	UFUNCTION()
 	void MenuMode();

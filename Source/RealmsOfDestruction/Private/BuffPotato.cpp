@@ -8,30 +8,21 @@
 
 ABuffPotato::ABuffPotato()
 {
+	bReplicates = true;
+
 	RightHand = CreateDefaultSubobject<UBoxComponent>(TEXT("RightPunchCollision"));
 	RightHand->SetCollisionProfileName(FName("Punch"));
-	//RightHand->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//RightHand->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	//RightHand->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	//RightHand->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Overlap);
-	RightHand->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("hand_R"));
+	RightHand->SetupAttachment(GetMesh(), FName("hand_R"));
 
 	LeftHand = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftPunchCollision"));
 	LeftHand->SetCollisionProfileName(FName("Punch"));
-	//LeftHand->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//LeftHand->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	//LeftHand->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	//LeftHand->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Overlap);
-	LeftHand->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("hand_L"));
-
-	bReplicates = true;
-
-
+	LeftHand->SetupAttachment(GetMesh(),  FName("hand_L"));
 }
 
 void ABuffPotato::BeginPlay()
 {
 	Super::BeginPlay();
+
 	RightHand->OnComponentBeginOverlap.AddDynamic(this, &ABuffPotato::OnPunchOverlapBegin);
 
 	LeftHand->OnComponentBeginOverlap.AddDynamic(this, &ABuffPotato::OnPunchOverlapBegin);

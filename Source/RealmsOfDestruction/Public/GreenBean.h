@@ -17,22 +17,39 @@ class REALMSOFDESTRUCTION_API AGreenBean : public ACharacterMovement
 
 
 public:
+
+	AGreenBean();
+
+	virtual void BeginPlay() override;
+
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
 	// Function that handles firing projectiles.
 	UFUNCTION()
 	void Fire();
 
-	UFUNCTION(Reliable, Server)
-	void Server_Fire();
-	void Server_Fire_Implementation();
-
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	// Gun muzzle offset from the camera location.
-	UPROPERTY(EditAnywhere)
-	FVector MuzzleOffset = FVector(40.f, 0.f, -50.f);
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+		class USceneComponent* MuzzleLocation1;
 
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+		class USceneComponent* MuzzleLocation2;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+		class USceneComponent* MuzzleLocation3;
 	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class AProjectile> ProjectileClass;
+
+	UFUNCTION(Reliable, Server)
+	void Server_Fire(FVector MuzzleLocation, FRotator MuzzleRotation);
+	void Server_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation);
+
+	UFUNCTION(Reliable, NetMulticast)
+	void Multicast_Fire(FVector MuzzleLocation, FRotator MuzzleRotation);
+	void Multicast_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation);
+
+	void Shoot(FVector MuzzleLocation, FRotator MuzzleRotation);
 	
 };
