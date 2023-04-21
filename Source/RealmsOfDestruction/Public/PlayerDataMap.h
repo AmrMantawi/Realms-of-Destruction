@@ -3,16 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
-#include "FreeForAll.generated.h"
+#include "UObject/NoExportTypes.h"
+#include "PlayerDataMap.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class REALMSOFDESTRUCTION_API AFreeForAll : public AGameModeBase
+class REALMSOFDESTRUCTION_API UPlayerDataMap : public UObject
 {
 	GENERATED_BODY()
-private:
-
+	
 };

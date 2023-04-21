@@ -9,6 +9,7 @@
 #include "PlayesrDisplay.h"
 #include "SettingsMenu.h"
 #include "PauseMenu.h"
+#include "RealmsPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -107,44 +108,45 @@ void ACharacterMovement::Client_UnSetup_Implementation()
 
 void ACharacterMovement::Client_Setup_Implementation()
 {
-    if (IsLocallyControlled() && HealthBarClass)
+    if (AGamePlayerController* PC = GetController<AGamePlayerController>())
     {
-        PC = GetController<AGamePlayerController>();
-        check(PC);
-        PlayerHealthBar = CreateWidget<UHealthBar>(PC, HealthBarClass);
-        check(PlayerHealthBar);
-        PlayerHealthBar->AddToPlayerScreen();
-
-        //Set UI values For Health and Shield
-        PlayerHealthBar->SetHealth(1);
-        PlayerHealthBar->SetShield(1);
-    }
-
-    UE_LOG(LogTemp, Warning, TEXT("Client Menu Setup"));
-
-    if (characterSelectionClass)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Creating Selection Menu"));
-        playerCharacterSelection = CreateWidget<UCharacterSelectionMenu>(PC, characterSelectionClass);
-    }
-
-    if (PauseMenuClass)
-    {
-        if (SettingsMenuClass)
+        if (IsLocallyControlled() && HealthBarClass)
         {
-            //Create Pause Menu
-            playerSettingsMenu = CreateWidget<USettingsMenu>(PC, SettingsMenuClass);
-        }
-        playerPauseMenu = CreateWidget<UPauseMenu>(PC, PauseMenuClass);
-        playerPauseMenu->Resume->OnClicked.AddDynamic(this, &ACharacterMovement::TogglePauseMenu);
-        playerPauseMenu->Settings->OnClicked.AddDynamic(this, &ACharacterMovement::ToggleSettingsMenu);
-        playerPauseMenu->ChangeCharacter->OnClicked.AddDynamic(this, &ACharacterMovement::ToggleCharacterSelectionMenu);
+            if ((PlayerHealthBar = CreateWidget<UHealthBar>(PC, HealthBarClass)) != nullptr) {
+                PlayerHealthBar->AddToPlayerScreen();
+            }
 
-    }
-    if (PlayersMenuClass)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Creating Selection Menu"));
-        playersMenu = CreateWidget<UPlayesrDisplay>(PC, PlayersMenuClass);
+            //Set UI values For Health and Shield
+            PlayerHealthBar->SetHealth(1);
+            PlayerHealthBar->SetShield(1);
+        }
+
+        // UE_LOG(LogTemp, Warning, TEXT("Client Menu Setup"));
+
+        if (characterSelectionClass)
+        {
+            // UE_LOG(LogTemp, Warning, TEXT("Creating Selection Menu"));
+            playerCharacterSelection = CreateWidget<UCharacterSelectionMenu>(PC, characterSelectionClass);
+        }
+
+        if (PauseMenuClass)
+        {
+            if (SettingsMenuClass)
+            {
+                //Create Pause Menu
+                playerSettingsMenu = CreateWidget<USettingsMenu>(PC, SettingsMenuClass);
+            }
+            playerPauseMenu = CreateWidget<UPauseMenu>(PC, PauseMenuClass);
+            playerPauseMenu->Resume->OnClicked.AddDynamic(this, &ACharacterMovement::TogglePauseMenu);
+            playerPauseMenu->Settings->OnClicked.AddDynamic(this, &ACharacterMovement::ToggleSettingsMenu);
+            playerPauseMenu->ChangeCharacter->OnClicked.AddDynamic(this, &ACharacterMovement::ToggleCharacterSelectionMenu);
+
+        }
+        if (PlayersMenuClass)
+        {
+            //UE_LOG(LogTemp, Warning, TEXT("Creating Selection Menu"));
+            playersMenu = CreateWidget<UPlayesrDisplay>(PC, PlayersMenuClass);
+        }
     }
 }
 
@@ -223,17 +225,17 @@ void ACharacterMovement::ToggleSettingsMenu()
 
 void ACharacterMovement::TogglePlayersMenu()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Player button pressed"));
+    //UE_LOG(LogTemp, Warning, TEXT("Player button pressed"));
 
     if (playersMenu)
     {
-        UE_LOG(LogTemp, Warning, TEXT("players menu"));
+        //UE_LOG(LogTemp, Warning, TEXT("players menu"));
 
         if (!playersMenuDisplayed)
         {
             playersMenu->AddToPlayerScreen();
             playersMenuDisplayed = true;
-            UE_LOG(LogTemp, Warning, TEXT("Display now..."));
+           // UE_LOG(LogTemp, Warning, TEXT("Display now..."));
         }
         else
         {
@@ -356,7 +358,7 @@ void ACharacterMovement::Server_StopSprint_Implementation()
 
 void ACharacterMovement::CharacterTakeDamage(float value)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Taking Damage"));
+    //UE_LOG(LogTemp, Warning, TEXT("Taking Damage"));
     //Damage Sheild First
     //if (HasAuthority())
     {
@@ -442,12 +444,12 @@ void ACharacterMovement::MultiplyDamage(float value)
     {
         //Server
         bonusDamage *= value;
-        UE_LOG(LogTemp, Warning, TEXT("Server Damage"));
+        //UE_LOG(LogTemp, Warning, TEXT("Server Damage"));
 
         if (!IsLocallyControlled())
         {
             //Client
-            UE_LOG(LogTemp, Warning, TEXT("Client Damage"));
+            //UE_LOG(LogTemp, Warning, TEXT("Client Damage"));
             Client_SetDamage(value);
         }
         GetWorldTimerManager().SetTimer(timerHandle, this, &ACharacterMovement::ResetDamage, 1.0f, false, 3.0f);
@@ -496,12 +498,12 @@ void ACharacterMovement::MultiplySpeed(float value)
         bonusSpeed *= value;
         GetCharacterMovement()->MaxWalkSpeed *= bonusSpeed;
         FPSCameraComponent->SetFieldOfView(100);
-        UE_LOG(LogTemp, Warning, TEXT("Server Speed"));
+        //UE_LOG(LogTemp, Warning, TEXT("Server Speed"));
 
         if (!IsLocallyControlled())
         {
             //Client
-            UE_LOG(LogTemp, Warning, TEXT("Client Speed"));
+            //UE_LOG(LogTemp, Warning, TEXT("Client Speed"));
             Client_SetSpeed(value);
         }
         GetWorldTimerManager().SetTimer(timerHandle, this, &ACharacterMovement::ResetSpeed, 1.0f, false, 3.0f);
@@ -551,7 +553,7 @@ void ACharacterMovement::Client_SetHealth_Implementation()
 {
     if (IsLocallyControlled() && PlayerHealthBar)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Health Set: %f"), currentHealth);
+        //UE_LOG(LogTemp, Warning, TEXT("Health Set: %f"), currentHealth);
         PlayerHealthBar->SetHealth((currentHealth > 0) ? currentHealth / maxHealth : 0);
     }
 }
@@ -559,7 +561,7 @@ void ACharacterMovement::Client_SetShield_Implementation()
 {
     if (IsLocallyControlled() && PlayerHealthBar)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Shield Set: %f"), currentShield);
+       // UE_LOG(LogTemp, Warning, TEXT("Shield Set: %f"), currentShield);
         PlayerHealthBar->SetShield((currentShield > 0) ? currentShield / maxShield : 0);
     }
 }
@@ -567,9 +569,9 @@ void ACharacterMovement::Client_SetShield_Implementation()
 
 void ACharacterMovement::MenuMode()
 {
-    if (PC)
+    if (AGamePlayerController* PC = GetController<AGamePlayerController>())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Menu Mode"));
+        //UE_LOG(LogTemp, Warning, TEXT("Menu Mode"));
 
         FInputModeGameAndUI GameAndUI;
 
@@ -580,9 +582,9 @@ void ACharacterMovement::MenuMode()
 
 void ACharacterMovement::PlayMode()
 {
-    if(PC)
+    if(AGamePlayerController* PC = GetController<AGamePlayerController>())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Play Mode"));
+        //UE_LOG(LogTemp, Warning, TEXT("Play Mode"));
 
         FInputModeGameOnly GameOnly;
 
@@ -597,6 +599,7 @@ void ACharacterMovement::PlayMode()
 //Character State getter and setter
 void ACharacterMovement::setCharacterState(ECharacterState state)
 {
+    UE_LOG(LogTemp, Warning, TEXT("Setting Character State"));
     characterState = state;
     OnRep_HandleCharacterState();
 }
@@ -618,15 +621,24 @@ void ACharacterMovement::OnRep_HandleCharacterState()
 
 void ACharacterMovement::Die()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Dead"));
-    //if (HasAuthority())
+    //UE_LOG(LogTemp, Warning, TEXT("Dead"));
+    if (HasAuthority())
     {
-        PC->Die();
+        if (ARealmsPlayerState* state = this->GetPlayerState<ARealmsPlayerState>())
+        {
+            state->AddDeath();
+        }
+        if (AGamePlayerController* PC = GetController<AGamePlayerController>())
+        {
+            PC->Die();
+        }
     }
 }
 
 void ACharacterMovement::DeadState()
 {
+    UE_LOG(LogTemp, Warning, TEXT("Dead State"));
+
     this->GetMesh()->SetSimulatePhysics(true);
     this->GetMesh()->SetCollisionProfileName(TEXT("PhysicsActor"));
     this->GetMesh()->SetOwnerNoSee(false);

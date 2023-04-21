@@ -15,14 +15,46 @@ class REALMSOFDESTRUCTION_API ARealmsPlayerState : public APlayerState
 	GENERATED_BODY()
 public:
 	ARealmsPlayerState();
+
 	virtual void BeginPlay() override;
 
-	float getKills();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	void addKill();
+	UFUNCTION(Server, Reliable)
+	void Server_PlayerSetup(int32 UserID, const FString& Username);
+	void Server_PlayerSetup_Implementation(int32 UserID, const FString& Username);
 
-	FString getDisplayName();
+	int32 GetKills();
+
+	void AddKill();
+
+	UFUNCTION(Server, Reliable)
+	void Server_AddKill();
+	void Server_AddKill_Implementation();
+
+	int32 GetDeaths();
+
+	void AddDeath();
+
+	UFUNCTION(Server, Reliable)
+	void Server_AddDeath();
+	void Server_AddDeath_Implementation();
+
+	FString GetDisplayName();
+
+
+
 
 private:
-	FString displayName;
+	UPROPERTY(Replicated)
+	int32 ID;
+
+	UPROPERTY(Replicated)
+	FString Name;
+
+	UPROPERTY(Replicated)
+	int32 Kills;
+
+	UPROPERTY(Replicated)
+	int32 Deaths;
 };

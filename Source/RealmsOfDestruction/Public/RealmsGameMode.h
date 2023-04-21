@@ -4,15 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "FreeForAll.generated.h"
+#include "RealmsGameMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class REALMSOFDESTRUCTION_API AFreeForAll : public AGameModeBase
+class REALMSOFDESTRUCTION_API ARealmsGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-private:
-
+public:
 };

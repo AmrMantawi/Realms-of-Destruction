@@ -15,16 +15,16 @@ void UPlayesrDisplay::NativeConstruct()
         PlayerList->ClearChildren();
         if (ARealmsGameState* MyGameState = GetWorld()->GetGameState<ARealmsGameState>())
         {
-
             // Loop through the player info map in the game state and add a row for each player
-            for (auto& Entry : MyGameState->getPlayerData())
+            for (auto& Entry : MyGameState->GetData())
             {
+                UE_LOG(LogTemp, Warning, TEXT("Name: %s\nKills: %d\nDeaths: %d"), &Entry.Name,Entry.Kills,Entry.Deaths);
                 // Create a new row widget from the player row class
                 UPlayerEntry* PlayerRow = CreateWidget<UPlayerEntry>(PlayerList, EntryClass);
                 PlayerList->AddChild(PlayerRow);
-                PlayerRow->PlayerName->SetText(FText::FromString(Entry.Value.Name));
-                PlayerRow->Kills->SetText(FText::AsNumber(Entry.Value.Kills));
-                PlayerRow->Deaths->SetText(FText::AsNumber(Entry.Value.Deaths));
+                PlayerRow->PlayerName->SetText(FText::FromString(Entry.Name));
+                PlayerRow->Kills->SetText(FText::AsNumber(Entry.Kills));
+                PlayerRow->Deaths->SetText(FText::AsNumber(Entry.Deaths));
             }
         }
     }

@@ -254,8 +254,8 @@ public:
 	UPROPERTY(replicated)
 	float currentShield;
 
-	UPROPERTY()
-	class AGamePlayerController* GamePlayerController;
+	//UPROPERTY()
+	//class AGamePlayerController* GamePlayerController;
 
-	AGamePlayerController* PC;
+	//AGamePlayerController* PC;
 };

@@ -8,17 +8,18 @@
 // Sets default values
 AProjectile::AProjectile()
 {
+	//Projectile Collision Component
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	SetRootComponent(CollisionComponent);
 	CollisionComponent->SetSphereRadius(25.f);
 	CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
 	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnOverlap);
-
 	CollisionComponent->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 
+	//Projectile Movemenmt Component
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
-	ProjectileMovementComponent->InitialSpeed = 3000.0f;
-	ProjectileMovementComponent->MaxSpeed = 3000.0f;
+	ProjectileMovementComponent->InitialSpeed = Speed;
+	ProjectileMovementComponent->MaxSpeed = Speed;
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->bShouldBounce = true;
 	ProjectileMovementComponent->Bounciness = 0.3f;
@@ -46,7 +47,7 @@ void AProjectile::FireInDirection(const FVector& ShootDirection)
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
-	//Apply Impulse
+	//Apply impulse to hit actor
 	if (OtherActor != nullptr && OtherActor != this && OtherComponent != nullptr && OtherComponent->IsSimulatingPhysics() && ProjectileMovementComponent)
 	{
 		OtherComponent->AddImpulseAtLocation(ProjectileMovementComponent->Velocity * 100.0f, Hit.ImpactPoint);
@@ -57,14 +58,15 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 
 void AProjectile::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
+	
 	ACharacterMovement* Target = Cast<ACharacterMovement>(OtherActor);
 	ACharacterMovement* Shooter = GetInstigator<ACharacterMovement>();
 
+	//Check if valid target
 	if (Target && Target != Shooter)
 	{
-
-		if (Target->IsLocallyControlled())
+		//Apply damage to target
+		if (Target->HasAuthority())
 		{
 			Target->CharacterTakeDamage(damage);
 			//Killed other player
@@ -76,17 +78,18 @@ void AProjectile::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Adding Kill..."));
 
-					state->addKill();
+					state->AddKill();
 				}
 			}
 		}
 
+		//Create niagra system on collision
 		if (HitSystem)
 		{
-			//UNiagaraFunctionLibrary
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitSystem, GetActorLocation());
 		}
 
+		//Destroy projectile
 		this->Destroy();
 	}
 }

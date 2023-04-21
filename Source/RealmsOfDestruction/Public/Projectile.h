@@ -49,6 +49,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	float damage;
 
+	UPROPERTY(EditAnywhere)
+	float Speed = 3000.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UNiagaraSystem* HitSystem;
 	/*

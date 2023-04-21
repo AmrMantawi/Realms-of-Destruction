@@ -28,7 +28,7 @@ void ATransitionPawn::BeginPlay()
 		{
 			if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 			{
-				PC->ClientTravel("/Game/Maps/TestMenu", TRAVEL_Absolute);
+				//PC->ClientTravel("/Game/Maps/MainMenu", TRAVEL_Absolute);
 			}
 		}
 	}

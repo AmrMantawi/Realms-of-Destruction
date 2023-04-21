@@ -204,11 +204,8 @@ void UEOSGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 
 		TArray<class FOnlineSessionSearchResult> AvailableSessions = SearchSettings->SearchResults;
 
-		FOnlineSessionSearchResult UserSession;
-		for (int i = 0; i < AvailableSessions.Num(); i++)
+		for (auto UserSession : AvailableSessions)
 		{
-
-			UserSession = AvailableSessions[i];
 			SessionEntry = CreateWidget<UEntry>(SessionEntryPanel, EntryClass);
 			SessionEntryPanel->AddChild(SessionEntry);
 			SessionEntry->HostName->SetText(FText::FromString(UserSession.Session.OwningUserName));
@@ -228,9 +225,9 @@ void UEOSGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 			else {
 				SessionEntry->Description->SetText(FText::FromString("None"));
 			}
-
 			SessionEntry->JoinButton->searchResult = UserSession;
 		}
+
 	}
 
 	if (OnlineSubsystem)
@@ -248,11 +245,20 @@ void UEOSGameInstance::JoinSessions(FOnlineSessionSearchResult searchResult)
 	{
 		if (OnlineSubsystem)
 		{
-			if (IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface())
+			if (searchResult.IsValid())
 			{
-				const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-				SessionPtr->OnJoinSessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnJoinSessionsComplete);
-				SessionPtr->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, searchResult);
+				UE_LOG(LogTemp, Warning, TEXT("Search Result Valid"));
+
+				if (IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface())
+				{
+
+					const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+					SessionPtr->OnJoinSessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnJoinSessionsComplete);
+					SessionPtr->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, searchResult);
+				}
+			}
+			else {
+				UE_LOG(LogTemp, Warning, TEXT("Search Result Not Valid"));
 			}
 		}
 	}

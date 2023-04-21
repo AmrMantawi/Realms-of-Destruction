@@ -16,6 +16,8 @@ struct FPlayerData
 
 public:
     UPROPERTY(BlueprintReadWrite, Category = "PlayerData")
+        int32 PlayerID = 0;
+    UPROPERTY(BlueprintReadWrite, Category = "PlayerData")
         FString Name = "Unknown";
 
     UPROPERTY(BlueprintReadWrite, Category = "PlayerData")
@@ -30,17 +32,27 @@ class REALMSOFDESTRUCTION_API ARealmsGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 public:
-   // virtual void BeginPlay() override;
-	void UpdatePlayerData(int32 PlayerID, int32 kills, int32 deaths);
+    ARealmsGameState();
 
-    void HandleStartingPlayer(int32 PlayerID, FString PlayerName);
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    void HandleLeavingPlayer(int32 PlayeID);
+    UFUNCTION(Reliable, Server)
+    void Server_HandleLeavingPlayer(int32 PlayerID);
+    void Server_HandleLeavingPlayer_Implementation(int32 PlayerID);
 
-    TMap<int32, FPlayerData> getPlayerData();
+    UFUNCTION(Reliable, Server)
+    void Server_HandleStartingPlayer(int32 PlayerID, const FString& PlayerName);
+    void Server_HandleStartingPlayer_Implementation(int32 playerID, const FString& PlayerName);
 
-private:
-    UPROPERTY()
-    TMap<int32, FPlayerData> PlayerMap;
+    UFUNCTION(Reliable, Server)
+    void Server_UpdatePlayerData(int32 PlayerID, int32 Kills, int32 Deaths);
+    void Server_UpdatePlayerData_Implementation(int32 PlayerID, int32 Kills, int32 Deaths);
+
+    UFUNCTION()
+    TArray<FPlayerData> GetData();
+
+//private:
+    UPROPERTY(Replicated)
+    TArray<FPlayerData> PlayersData;
 
 };
