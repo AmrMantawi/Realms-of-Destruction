@@ -8,6 +8,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "RealmsPlayerState.h"
 #include "Projectile.generated.h"
 
@@ -30,11 +31,11 @@ public:
 
 	// Sphere collision component.
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
-		USphereComponent* CollisionComponent;
+	USphereComponent* CollisionComponent;
 
 	// Projectile movement component.
 	UPROPERTY(VisibleAnywhere, Category = Movement)
-		UProjectileMovementComponent* ProjectileMovementComponent;
+	UProjectileMovementComponent* ProjectileMovementComponent;
 
 	// Function that initializes the projectile's velocity in the shoot direction.
 	void FireInDirection(const FVector& ShootDirection);
@@ -54,9 +55,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UNiagaraSystem* HitSystem;
-	/*
+
 	// Projectile mesh
-	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
-		UStaticMeshComponent* ProjectileMeshComponent;
-		*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* Mesh;
 };

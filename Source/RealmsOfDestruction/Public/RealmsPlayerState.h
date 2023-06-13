@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "RealmsGameState.h"
 #include "RealmsPlayerState.generated.h"
 
 /**
@@ -25,7 +26,6 @@ public:
 	void Server_PlayerSetup_Implementation(int32 UserID, const FString& Username);
 
 	int32 GetKills();
-
 	void AddKill();
 
 	UFUNCTION(Server, Reliable)
@@ -33,13 +33,16 @@ public:
 	void Server_AddKill_Implementation();
 
 	int32 GetDeaths();
-
 	void AddDeath();
 
 	UFUNCTION(Server, Reliable)
 	void Server_AddDeath();
 	void Server_AddDeath_Implementation();
 
+	UFUNCTION()
+	ETeam GetTeam();
+
+	UFUNCTION()
 	FString GetDisplayName();
 
 
@@ -57,4 +60,7 @@ private:
 
 	UPROPERTY(Replicated)
 	int32 Deaths;
+
+	UPROPERTY(Replicated)
+	ETeam Team;
 };

@@ -10,22 +10,23 @@ ABuffPotato::ABuffPotato()
 {
 	bReplicates = true;
 
+	//Create collision components for right and left hand
 	RightHand = CreateDefaultSubobject<UBoxComponent>(TEXT("RightPunchCollision"));
-	RightHand->SetCollisionProfileName(FName("Punch"));
+	RightHand->SetCollisionProfileName(FName("OverlapOnlyPawn"));
 	RightHand->SetupAttachment(GetMesh(), FName("hand_R"));
+	RightHand->OnComponentHit.AddDynamic(this, &ABuffPotato::OnHit);
+	RightHand->OnComponentBeginOverlap.AddDynamic(this, &ABuffPotato::OnOverlap);
 
 	LeftHand = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftPunchCollision"));
-	LeftHand->SetCollisionProfileName(FName("Punch"));
+	LeftHand->SetCollisionProfileName(FName("OverlapOnlyPawn"));
 	LeftHand->SetupAttachment(GetMesh(),  FName("hand_L"));
+	LeftHand->OnComponentHit.AddDynamic(this, &ABuffPotato::OnHit);
+	LeftHand->OnComponentBeginOverlap.AddDynamic(this, &ABuffPotato::OnOverlap);
 }
 
 void ABuffPotato::BeginPlay()
 {
 	Super::BeginPlay();
-
-	RightHand->OnComponentBeginOverlap.AddDynamic(this, &ABuffPotato::OnPunchOverlapBegin);
-
-	LeftHand->OnComponentBeginOverlap.AddDynamic(this, &ABuffPotato::OnPunchOverlapBegin);
 
 }
 
@@ -35,28 +36,52 @@ void ABuffPotato::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLif
 	DOREPLIFETIME(ABuffPotato, isPunching);
 }
 
-void ABuffPotato::OnPunchOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ABuffPotato::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Outside If Statement"));
+	UE_LOG(LogTemp, Warning, TEXT("Compoenent hit"));
+	//Return if player is not attempting to punch
+	if (!isPunching) return;
 
-	// Check if the other actor is something that can be punched
-	if (OtherActor && OtherActor != this && OtherComp && isPunching)
+	//Apply impulse to hit actor
+	if (OtherActor != this && OtherComponent != nullptr && OtherComponent->IsSimulatingPhysics())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit Something"));
+		UE_LOG(LogTemp, Warning, TEXT("Normal Impulse: %s"), *NormalImpulse.ToString());
+		OtherComponent->AddImpulseAtLocation(NormalImpulse * 100.0f, Hit.ImpactPoint);
+	}
+}
 
-		// Apply damage or effects to the other actor
-		// You can use code like this to apply a force to the other actor and knock it back
-		OtherComp->AddImpulseAtLocation(GetActorForwardVector() * PunchForce, SweepResult.Location, SweepResult.BoneName);
 
-		ACharacterMovement* Target = Cast<ACharacterMovement>(OtherActor);
-		ACharacterMovement* Shooter = GetInstigator<ACharacterMovement>();
-		if (Target && Target != Shooter)
+
+void ABuffPotato::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	//Return if player is not attempting to punch
+	if (!isPunching) return;
+
+	ACharacterMovement* Target = Cast<ACharacterMovement>(OtherActor);
+	ACharacterMovement* Shooter = GetInstigator<ACharacterMovement>();
+
+	//Check if valid target
+	if (Target && Target != Shooter)
+	{
+		//Apply damage to target
+		if (Target->HasAuthority())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Hit Player"));
-
-			if (Target->IsLocallyControlled())
+			if (ARealmsPlayerState* ShooterPS = Shooter->GetPlayerState<ARealmsPlayerState>())
 			{
-				Target->CharacterTakeDamage(damage);
+				if (ARealmsPlayerState* TargetPS = Target->GetPlayerState<ARealmsPlayerState>())
+				{
+					//Apply damage if shooter and target are from different teams or if one is not in a team
+					if (ShooterPS->GetTeam() == ETeam::NoTeam || ShooterPS->GetTeam() != TargetPS->GetTeam())
+					{
+						Target->CharacterTakeDamage(damage);
+
+						//Add kill to shooter if target player died
+						if (Target->getCharacterState() == ECharacterState::Dead)
+						{
+							ShooterPS->AddKill();
+						}
+					}
+				}
 			}
 		}
 	}

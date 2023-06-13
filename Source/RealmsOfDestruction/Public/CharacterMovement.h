@@ -34,9 +34,12 @@ public:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	UFUNCTION()
+	void setCharacterState(ECharacterState state);
 
-
-
+	UFUNCTION()
+	ECharacterState getCharacterState();
+protected:
 	UFUNCTION()
 	void Setup();
 
@@ -47,6 +50,7 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_UnSetup();
 	void Client_UnSetup_Implementation();
+
 
 	//Toggle Character Selection Menu
 	UFUNCTION()
@@ -62,34 +66,37 @@ public:
 	UFUNCTION()
 	virtual void UnPossessed() override;
 
+private:
 	UPROPERTY()
-		class UPauseMenu* playerPauseMenu;
+	class UPauseMenu* PlayerPauseMenu;
 
 	UPROPERTY()
-		class UCharacterSelectionMenu* playerCharacterSelection;
+	class UCharacterSelectionMenu* PlayerCharacterSelection;
+
 	UPROPERTY()
-	class UPlayesrDisplay* playersMenu;
+	class USettingsMenu* PlayerSettingsMenu;
+
+	UPROPERTY()
+	class UHealthBar* PlayerHealthBar;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UCharacterSelectionMenu> CharacterSelectionClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UPauseMenu> PauseMenuClass;
 
 	UPROPERTY(EditAnywhere)
-		TSubclassOf<class UCharacterSelectionMenu> characterSelectionClass;
+	TSubclassOf<class USettingsMenu> SettingsMenuClass;
 
 	UPROPERTY(EditAnywhere)
-		TSubclassOf<class UPauseMenu> PauseMenuClass;
-	UPROPERTY(EditAnywhere)
-		TSubclassOf<class UPlayesrDisplay> PlayersMenuClass;
+	TSubclassOf<class UHealthBar> HealthBarClass;
+	UPROPERTY()
+	bool bPauseMenuDisplayed = false;
 
 	UPROPERTY()
-		bool pauseMenuDisplayed = false;
+	bool bCharacterSelectionMenuDisplayed = false;
 
-	UPROPERTY()
-		bool characterSelectionMenuDisplayed = false;
-
-	UPROPERTY()
-		bool playersMenuDisplayed = false;
-
-	UFUNCTION()
-		void TogglePlayersMenu();
-
+protected:
 	UFUNCTION()
 	void MenuMode();
 
@@ -97,13 +104,7 @@ public:
 	void PlayMode();
 
 	UPROPERTY()
-	class USettingsMenu* playerSettingsMenu;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class USettingsMenu> SettingsMenuClass;
-
-	UPROPERTY()
-	bool settingsDisplayed = false;
+	bool bSettingsDisplayed = false;
 
 	UFUNCTION()
 	void ToggleSettingsMenu();
@@ -111,28 +112,31 @@ public:
 	UFUNCTION()
 	void OnRep_HandleCharacterState();
 
-	UFUNCTION()
-	void setCharacterState(ECharacterState state);
-
-	UFUNCTION()
-	ECharacterState getCharacterState();
-
-
 private:
 	
 	UPROPERTY(ReplicatedUsing = OnRep_HandleCharacterState)
-		ECharacterState characterState;
+	ECharacterState CharacterState;
 
 	UFUNCTION()
-		void Die();
+	void OutlineCharacter();
+
+	UFUNCTION()
+	void Die();
 
 	UFUNCTION()
 	void DeadState();
 
-	FTimerHandle timerHandle;
+	FTimerHandle TimerHandle;
 
+protected:
 
-public:	
+	// FPS camera.
+	UPROPERTY(VisibleAnywhere)
+	UCameraComponent* FPSCameraComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "PostProcessing")
+	class UPostProcessComponent* PostProcessComponent;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -141,83 +145,74 @@ public:
 
 	// Handles input for moving forward and backward.
 	UFUNCTION()
-		void MoveForward(float Value);
+	void MoveForward(float Value);
 
 	// Handles input for moving right and left.
 	UFUNCTION()
-		void MoveRight(float Value);
+	void MoveRight(float Value);
 
 	// Sets jump flag when key is pressed.
 	UFUNCTION()
-		virtual void StartJump();
+	virtual void StartJump();
 
 	// Clears jump flag when key is released.
 	UFUNCTION()
-		virtual void StopJump();
+	virtual void StopJump();
 
 	// Sets sprint flag when key is pressed.
 	UFUNCTION()
-		virtual void StartSprint();
+	virtual void StartSprint();
 
 	// Clears sprint flag when key is released.
 	UFUNCTION()
-		virtual void StopSprint();
+	virtual void StopSprint();
 
 
 	// Sets sprint flag when key is pressed.
 	UFUNCTION(Server, Reliable)
-		virtual void Server_StartSprint();
-		virtual void Server_StartSprint_Implementation();
+	virtual void Server_StartSprint();
+	virtual void Server_StartSprint_Implementation();
 
 
 	// Clears sprint flag when key is released.
 	UFUNCTION(Server, Reliable)
-		virtual void Server_StopSprint();
-		virtual void Server_StopSprint_Implementation();
+	virtual void Server_StopSprint();
+	virtual void Server_StopSprint_Implementation();
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float speedMultiplier = 2;
-
-	UPROPERTY()
-	float bonusSpeed = 1;
+	UPROPERTY(EditDefaultsOnly, Category = "Character Movement: Walking")
+	float SprintSpeedMultiplier = 2;
 
 	UPROPERTY()
-	float bonusDamage = 1;
-
-	// FPS camera.
-	UPROPERTY(VisibleAnywhere)
-	UCameraComponent* FPSCameraComponent;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UHealthBar> HealthBarClass;
+	float SpeedBoostMultiplier = 1;
 
 	UPROPERTY()
-	class UHealthBar* PlayerHealthBar;
+	float DamageBoostMultiplier = 1;
+
+	public:
 
 	//Take Damage
-	void CharacterTakeDamage(float value);
+	void CharacterTakeDamage(float Value);
 
 	//Damage To Health
-	void DamageHealth(float value);
-
+	void DamageHealth(float Value);
+	
 	//Damage to Sheild
-	void DamageShield(float value);
+	void DamageShield(float Value);
 
 	//Gain Health
-	void GainHealth(float value);
+	void GainHealth(float Value);
 
 	//Gain Sheild
-	void GainShield(float value);
+	void GainShield(float Value);
 
-
-	void MultiplySpeed(float value);
-
+private:
 	void ResetSpeed();
-
-	void MultiplyDamage(float value);
-
 	void ResetDamage();
+
+public:
+	void MultiplySpeed(float Value);
+	void MultiplyDamage(float Value);
 
 	UFUNCTION(Reliable, Client)
 	void Client_SetHealth();
@@ -243,19 +238,15 @@ public:
 	void Client_ResetDamage();
 	void Client_ResetDamage_Implementation();
 
-	UPROPERTY(EditAnywhere)
-	float maxHealth = 100.0f;
+private:
+	UPROPERTY(EditDefaultsOnly)
+	float MaxHealth = 100.0f;
 
-	UPROPERTY(EditAnywhere)
-	float maxShield = 100.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float MaxShield = 100.0f;
 
 	UPROPERTY(replicated)
-	float currentHealth;
+	float CurrentHealth;
 	UPROPERTY(replicated)
-	float currentShield;
-
-	//UPROPERTY()
-	//class AGamePlayerController* GamePlayerController;
-
-	//AGamePlayerController* PC;
+	float CurrentShield;
 };

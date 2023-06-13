@@ -8,22 +8,24 @@
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineFriendsInterface.h"
 #include "EntryJoin.h"
+#include "GameFramework/GameModeBase.h"
 #include "GameFramework/Controller.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Kismet/GameplayStatics.h"
 
 const FName TestSessionName = FName("RealmsOfDestructionLobby");
+const FString ArenaMap = FString("/Game/Maps/Arena?listen");
+const FString PencilCaseMap = FString("/Game/Maps/PencilCase?listen");
+const FString PracticeMap = FString("/Game/Maps/PracticeMap?listen");
 
 UEOSGameInstance::UEOSGameInstance()
 {
 	bIsLoggedIn = false;
-	//PathToLobby = FString::Printf(TEXT("%s?listen"), *LobbyPath);
 }
 
 void UEOSGameInstance::Init()
 {
 	Super::Init();
-
 	OnlineSubsystem = IOnlineSubsystem::Get();
 	Login();
 }
@@ -32,6 +34,7 @@ void UEOSGameInstance::Login()
 {
 	if (OnlineSubsystem)
 	{
+		//Prompt user to login
 		if (IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
 		{
 			FOnlineAccountCredentials Credentials;
@@ -56,10 +59,12 @@ void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, 
 		{
 			Identity->ClearOnLoginCompleteDelegates(0, this);
 
+			//Set Username
 			PlayerUserName = Identity->GetPlayerNickname(UserId);
 
 			UE_LOG(LogTemp, Warning, TEXT("User Name: %s"), *PlayerUserName);
 
+			//Trasport player to Main Menu
 			if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 			{
 				PC->ClientTravel("/Game/Maps/MainMenu", TRAVEL_Absolute);
@@ -68,7 +73,45 @@ void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, 
 	}
 }
 
-void UEOSGameInstance::CreateSession(int capacity, FString SessionName, FString map, FString Description)
+void UEOSGameInstance::CreateSession(int Capacity, FString SessionName, FString GameMode, FString Map, EGameType Type)
+{
+	if (bIsLoggedIn)
+	{
+		if (OnlineSubsystem)
+		{
+			if (IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface())
+			{
+				//Set settings for session to be created
+				FOnlineSessionSettings SessionSettings;
+				SessionSettings.bIsDedicated = false;
+				SessionSettings.bShouldAdvertise = true;
+				SessionSettings.bIsLANMatch = false;
+				SessionSettings.NumPublicConnections = Capacity;
+				SessionSettings.bAllowJoinInProgress = true;
+				SessionSettings.bAllowJoinViaPresence = true;
+				SessionSettings.bUsesPresence = true;
+				SessionSettings.Set(SEARCH_KEYWORDS, FString("RealmsOfDestructionLobby"), EOnlineDataAdvertisementType::ViaOnlineService);
+				SessionSettings.bUseLobbiesIfAvailable = true;
+				SessionSettings.BuildUniqueId = 1;
+				SessionSettings.Set(FName("SESSION_NAME"), SessionName, EOnlineDataAdvertisementType::ViaOnlineService);
+				SessionSettings.Set(FName("SESSION_TYPE"), static_cast<int32>(Type), EOnlineDataAdvertisementType::ViaOnlineService);
+				SessionSettings.Set(SETTING_MAPNAME, Map, EOnlineDataAdvertisementType::ViaOnlineService);
+				SessionSettings.Set(SETTING_GAMEMODE, GameMode, EOnlineDataAdvertisementType::ViaOnlineService);
+				
+				//Create session
+				const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+				SessionPtr->OnCreateSessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnCreateSessionComplete);
+				SessionPtr->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, SessionSettings);
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot Create Session : Not Logged In"));
+	}
+}
+
+void UEOSGameInstance::CreateSession(int Capacity, FString GameMode, FString Map, EGameType Type)
 {
 	if (bIsLoggedIn)
 	{
@@ -80,16 +123,16 @@ void UEOSGameInstance::CreateSession(int capacity, FString SessionName, FString 
 				SessionSettings.bIsDedicated = false;
 				SessionSettings.bShouldAdvertise = true;
 				SessionSettings.bIsLANMatch = false;
-				SessionSettings.NumPublicConnections = capacity;
+				SessionSettings.NumPublicConnections = Capacity;
 				SessionSettings.bAllowJoinInProgress = true;
 				SessionSettings.bAllowJoinViaPresence = true;
 				SessionSettings.bUsesPresence = true;
 				SessionSettings.Set(SEARCH_KEYWORDS, FString("RealmsOfDestructionLobby"), EOnlineDataAdvertisementType::ViaOnlineService);
 				SessionSettings.bUseLobbiesIfAvailable = true;
 				SessionSettings.BuildUniqueId = 1;
-				SessionSettings.Set(FName("SESSION_NAME"), SessionName, EOnlineDataAdvertisementType::ViaOnlineService);
-				SessionSettings.Set(FName("SESSION_DESCRIPTION"), Description, EOnlineDataAdvertisementType::ViaOnlineService);
-				SessionSettings.Set(FName("SESSION_MAP"), map, EOnlineDataAdvertisementType::ViaOnlineService);
+				SessionSettings.Set(FName("SESSION_TYPE"), static_cast<int32>(Type), EOnlineDataAdvertisementType::ViaOnlineService);
+				SessionSettings.Set(SETTING_MAPNAME, Map, EOnlineDataAdvertisementType::ViaOnlineService);
+				SessionSettings.Set(SETTING_GAMEMODE, GameMode, EOnlineDataAdvertisementType::ViaOnlineService);
 
 				const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 				SessionPtr->OnCreateSessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnCreateSessionComplete);
@@ -102,6 +145,7 @@ void UEOSGameInstance::CreateSession(int capacity, FString SessionName, FString 
 		UE_LOG(LogTemp, Warning, TEXT("Cannot Create Session : Not Logged In"));
 	}
 }
+
 
 void UEOSGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
@@ -116,28 +160,32 @@ void UEOSGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucce
 				UWorld* World = GetWorld();
 				if (!ensure(World != nullptr)) return;
 				FString temp;
-				if (SessionPtr->GetSessionSettings(SessionName)->Get(FName("SESSION_MAP"), temp))
+				if (SessionPtr->GetSessionSettings(SessionName)->Get(SETTING_MAPNAME, temp))
 				{
 					if (temp == "Arena")
 					{
-						World->ServerTravel("/Game/Maps/Arena?listen");
+						World->ServerTravel(ArenaMap);
 					}
 					else if (temp == "Pencil Case")
 					{
-						World->ServerTravel("/Game/Maps/FreeForAllLevel?listen");
+						World->ServerTravel(PencilCaseMap);
 					}
 					else if (temp == "Practice")
 					{
-						World->ServerTravel("/Game/Maps/PracticeMap?listen");
+						World->ServerTravel(PracticeMap);
 					}
 					else {
-						World->ServerTravel("/Game/Maps/Practice?listen");
+						World->ServerTravel(PracticeMap);
 					}
 				}
+
 			}
 			SessionPtr->StartSession(SessionName);
 			SessionPtr->ClearOnCreateSessionCompleteDelegates(this);
 		}
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("Failed to create session"));
 	}
 }
 
@@ -171,7 +219,7 @@ void UEOSGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSucc
 	}
 }
 
-void UEOSGameInstance::FindSessions(UPanelWidget* SessionPanel, TSubclassOf<class UEntry> EntryClassSet)
+void UEOSGameInstance::FindCustomGameSessions(UPanelWidget* SessionPanel, TSubclassOf<class UEntry> EntryClassSet)
 {
 	if (bIsLoggedIn)
 	{
@@ -184,9 +232,10 @@ void UEOSGameInstance::FindSessions(UPanelWidget* SessionPanel, TSubclassOf<clas
 				SearchSettings = MakeShareable(new FOnlineSessionSearch());
 				SearchSettings->MaxSearchResults = 5000;
 				SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+				SearchSettings->QuerySettings.Set(FName("SESSION_TYPE"), static_cast<int32>(EGameType::Custom), EOnlineComparisonOp::Equals);
 
 				const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-				SessionPtr->OnFindSessionsCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnFindSessionsComplete);
+				SessionPtr->OnFindSessionsCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnFindCustomGameSessionsComplete);
 				SessionPtr->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SearchSettings.ToSharedRef());
 
 				SessionEntryPanel = SessionPanel;
@@ -196,7 +245,7 @@ void UEOSGameInstance::FindSessions(UPanelWidget* SessionPanel, TSubclassOf<clas
 	}
 }
 
-void UEOSGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
+void UEOSGameInstance::OnFindCustomGameSessionsComplete(bool bWasSuccessful)
 {
 	if (bWasSuccessful)
 	{
@@ -218,12 +267,12 @@ void UEOSGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 			else {
 				SessionEntry->SessionName->SetText(FText::FromString("UnnamedSession"));
 			}
-			if (UserSession.Session.SessionSettings.Get(FName("SESSION_DESCRIPTION"), temp))
+			if (UserSession.Session.SessionSettings.Get(FName("SESSION_TYPE"), temp))
 			{
-				SessionEntry->Description->SetText(FText::FromString(temp));
+				SessionEntry->Type->SetText(FText::FromString(temp));
 			}
 			else {
-				SessionEntry->Description->SetText(FText::FromString("None"));
+				SessionEntry->Type->SetText(FText::FromString("None"));
 			}
 			SessionEntry->JoinButton->searchResult = UserSession;
 		}
@@ -238,8 +287,82 @@ void UEOSGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 		}
 	}
 }
+void UEOSGameInstance::FindSessions(EGameType Type) {
+	if (bIsLoggedIn)
+	{
+		if (OnlineSubsystem)
+		{
+			if (IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface())
+			{
+				SearchSettings = MakeShareable(new FOnlineSessionSearch());
+				SearchSettings->MaxSearchResults = 5000;
+				SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+				SearchSettings->QuerySettings.Set(FName("SESSION_TYPE"), StaticCast <int32>(Type), EOnlineComparisonOp::Equals);
 
-void UEOSGameInstance::JoinSessions(FOnlineSessionSearchResult searchResult)
+				const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+				SessionPtr->OnFindSessionsCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnFindSessionsComplete);
+				SessionPtr->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SearchSettings.ToSharedRef());
+			}
+		}
+	}
+}
+
+void UEOSGameInstance::OnFindSessionsComplete(bool bWasSuccessful) {
+	bool bJoinedSession = false;
+
+	//Attempt to join a session
+	if (bWasSuccessful)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Success: %d Lobbies"), SearchSettings->SearchResults.Num());
+
+		TArray<class FOnlineSessionSearchResult> AvailableSessions = SearchSettings->SearchResults;
+
+		for (auto UserSession : AvailableSessions)
+		{
+			if (UserSession.IsValid() && UserSession.Session.NumOpenPublicConnections > 0)
+			{
+				if (JoinSessions(UserSession))
+				{
+					bJoinedSession = true;
+					break;
+				}
+			}
+		}
+	}
+
+	//Create a session if session was not found
+	if(!bJoinedSession)
+	{
+		int32 temp;
+		if (SearchSettings->QuerySettings.Get(FName("SESSION_TYPE"), temp))
+		{
+			EGameType Type = StaticCast<EGameType>(temp);
+			FString GameMode;
+			FString Map;
+			if (Type == EGameType::Free_For_All)
+			{
+				GameMode = FString("FreeForAll");
+				Map = FString("Arena");
+			}
+			else {
+				GameMode = FString("TeamDeathmatch");
+				Map = FString("Pencil Case");
+			}
+			CreateSession(10, GameMode, Map, Type);
+		}
+	}
+
+	//Clear Delegate
+	if (OnlineSubsystem)
+	{
+		if (IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface())
+		{
+			SessionPtr->ClearOnFindSessionsCompleteDelegates(this);
+		}
+	}
+}
+
+bool UEOSGameInstance::JoinSessions(FOnlineSessionSearchResult searchResult)
 {
 	if (bIsLoggedIn)
 	{
@@ -254,7 +377,8 @@ void UEOSGameInstance::JoinSessions(FOnlineSessionSearchResult searchResult)
 
 					const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 					SessionPtr->OnJoinSessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnJoinSessionsComplete);
-					SessionPtr->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, searchResult);
+					if (SessionPtr->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, searchResult))
+						return true;
 				}
 			}
 			else {
@@ -262,6 +386,7 @@ void UEOSGameInstance::JoinSessions(FOnlineSessionSearchResult searchResult)
 			}
 		}
 	}
+	return false;
 }
 
 void UEOSGameInstance::OnJoinSessionsComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)

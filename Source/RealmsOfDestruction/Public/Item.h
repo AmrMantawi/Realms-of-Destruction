@@ -32,32 +32,33 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* MeshComponent;
 
-	UPROPERTY(EditAnywhere)
-	bool health;
-	UPROPERTY(EditAnywhere)
-	bool shield;
-	UPROPERTY(EditAnywhere)
-	bool strength;
-	UPROPERTY(EditAnywhere)
-	bool speed;
+	UPROPERTY(EditDefaultsOnly)
+	bool bHealthBoost;
+	UPROPERTY(EditDefaultsOnly)
+	bool bShieldBoost;
+	UPROPERTY(EditDefaultsOnly)
+	bool bStrengthBoost;
+	UPROPERTY(EditDefaultsOnly)
+	bool bSpeedBoost;
 
-	UPROPERTY(EditAnywhere)
-	int healthValue;
-	UPROPERTY(EditAnywhere)
-	int shieldValue;
-	UPROPERTY(EditAnywhere)
-	int strengthValue;
-	UPROPERTY(EditAnywhere)
-	int speedValue;
+	UPROPERTY(EditDefaultsOnly)
+	int HealthValue;
+	UPROPERTY(EditDefaultsOnly)
+	int ShieldValue;
+	UPROPERTY(EditDefaultsOnly)
+	int StrengthValue;
+	UPROPERTY(EditDefaultsOnly)
+	int SpeedValue;
 
 	UPROPERTY(ReplicatedUsing = OnRep_HandleItemState)
-		EItemState itemState;
+	EItemState ItemState;
 
 	UFUNCTION()
 	void OnRep_HandleItemState();
 
+	//Called on overlap with another component
 	UFUNCTION()
-	void OnHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
 	UFUNCTION()
 	void Deactivate();
@@ -65,8 +66,8 @@ public:
 	UFUNCTION()
 	void Activate();
 
-	UPROPERTY(EditAnywhere)
-	float respawnTime = 2.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float RespawnTime = 2.0f;
 
 	UPROPERTY()
 	FTimerHandle PickupRespawnTimer;

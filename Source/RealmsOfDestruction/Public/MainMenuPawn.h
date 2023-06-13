@@ -32,7 +32,7 @@ public:
 	class UMainMenu* playerMainMenu;
 
 	UPROPERTY(EditAnywhere)
-		TSubclassOf<class UMainMenu> MainMenuClass;
+	TSubclassOf<class UMainMenu> MainMenuClass;
 
 	//UPROPERTY()
 	//class APlayerController* playerController;

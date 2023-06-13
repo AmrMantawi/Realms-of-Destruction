@@ -6,11 +6,44 @@
 #include "CharacterSelectionMenu.h"
 #include "PauseMenu.h"
 #include "CharacterMovement.h"
+#include "RealmsGameMode.h"
+#include "PlayesrDisplay.h"
 #include "Net/UnrealNetwork.h"
 
 AGamePlayerController::AGamePlayerController()
 {
 	bReplicates = true;
+}
+
+void AGamePlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	InputComponent->BindAction("Player", IE_Pressed, this, &AGamePlayerController::TogglePlayerDisplay);
+}
+
+void AGamePlayerController::BeginPlay() {
+	Super::BeginPlay();
+
+	//Setup UI
+	Server_GetPlayerDisplayClass();
+}
+
+void AGamePlayerController::Server_GetPlayerDisplayClass_Implementation()
+{
+	if (ARealmsGameMode* GameMode = Cast<ARealmsGameMode>(GetWorld()->GetAuthGameMode()))
+	{
+		if (TSubclassOf<class UPlayesrDisplay> PlayersDisplayClass = GameMode->GetPlayerDisplayClass())
+		{
+			Client_Setup(PlayersDisplayClass);
+		}
+	}
+}
+
+void AGamePlayerController::Client_Setup_Implementation(TSubclassOf<class UPlayesrDisplay> PlayersDisplayClass)
+{
+	//Create Player Display Widget
+	PlayersDisplay = CreateWidget<UPlayesrDisplay>(this, PlayersDisplayClass);
 }
 
 void AGamePlayerController::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
@@ -84,7 +117,27 @@ void AGamePlayerController::Server_SpawnCharacter_Implementation(FVector Locatio
 
 }
 
+void AGamePlayerController::TogglePlayerDisplay()
+{
+	if (PlayersDisplay)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player Display Set"));
+
+		if (!bPlayersMenuDisplayed)
+		{
+			PlayersDisplay->AddToPlayerScreen();
+		}
+		else
+		{
+			PlayersDisplay->RemoveFromParent();
+		}
+
+		bPlayersMenuDisplayed = !bPlayersMenuDisplayed;
+	}
+}
+
 void AGamePlayerController::Die()
 {
 	Server_SpawnCharacter(FVector::ZeroVector, FRotator::ZeroRotator);
 }
+

@@ -19,6 +19,14 @@
  * 
  */
 
+UENUM(BlueprintType)
+enum class EGameType : uint8
+{
+	Free_For_All,
+	Team_Deathmatch,
+	Custom
+};
+
 UCLASS()
 class REALMSOFDESTRUCTION_API UEOSGameInstance : public UGameInstance
 {
@@ -29,20 +37,34 @@ public:
 
 	virtual void Init() override;
 
+	//Login player
 	void Login();
 	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 
+	//Create a session and host it
 	UFUNCTION(BlueprintCallable)
-	void CreateSession(int capacity, FString SessionName, FString map, FString Description);
+	void CreateSession(int Capacity, FString SessionName, FString GameMode, FString Map, EGameType Type);
+	//UFUNCTION(BlueprintCallable)
+	void CreateSession(int Capacity, FString GameMode, FString Map, EGameType Type);
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
-
+	
+	//Destory Session
 	UFUNCTION(BlueprintCallable)
 	void DestroySession();
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
-	UFUNCTION()
-	void FindSessions(UPanelWidget* SessionPanel, TSubclassOf<class UEntry> EntryClassSet);
+	//Find Session of specified type
+	//Joins session if found and creates a session otherwise
+	UFUNCTION(BlueprintCallable)
+	void FindSessions(EGameType Type);
 	void OnFindSessionsComplete(bool bWasSuccessful);
+
+	//Find Available Custom Game Sessions and Display to player
+	UFUNCTION()
+	void FindCustomGameSessions(UPanelWidget* SessionPanel, TSubclassOf<class UEntry> EntryClassSet);
+	void OnFindCustomGameSessionsComplete(bool bWasSuccessful);
+
+	//Game Search Settings
 	TSharedPtr<class FOnlineSessionSearch> SearchSettings;
 
 	UFUNCTION(BlueprintCallable)
@@ -58,7 +80,7 @@ public:
 
 	int mapIndex;
 
-	void JoinSessions(FOnlineSessionSearchResult searchResult);
+	bool JoinSessions(FOnlineSessionSearchResult searchResult);
 	void OnJoinSessionsComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 	UPROPERTY(BlueprintReadOnly)

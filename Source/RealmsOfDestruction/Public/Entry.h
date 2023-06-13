@@ -28,8 +28,7 @@ public:
 		UTextBlock* Capacity;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-		UTextBlock* Description;
-
+		UTextBlock* Type;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 		UEntryJoin* JoinButton;

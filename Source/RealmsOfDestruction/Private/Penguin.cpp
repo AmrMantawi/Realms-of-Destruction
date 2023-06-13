@@ -3,6 +3,21 @@
 
 #include "Penguin.h"
 
+APenguin::APenguin()
+{
+    // Create a first person camera component.
+    CheeseBlock = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CheeseBlock"));
+    check(CheeseBlock != nullptr);
+    // Attach the camera component to our capsule component.
+    CheeseBlock->SetupAttachment(FPSCameraComponent);
+}
+
+void APenguin::BeginPlay()
+{
+    Super::BeginPlay();
+    bCanShoot = true;
+}
+
 void APenguin::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -22,11 +37,9 @@ void APenguin::Fire()
         FRotator CameraRotation;
         GetActorEyesViewPoint(CameraLocation, CameraRotation);
 
-        // Set MuzzleOffset to spawn projectiles slightly in front of the camera.
-        //MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
 
         // Transform MuzzleOffset from camera space to world space.
-        FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
+        FVector MuzzleLocation = CheeseBlock->GetComponentLocation();
 
         // Skew the aim to be slightly upwards.
         FRotator MuzzleRotation = CameraRotation;
@@ -65,25 +78,45 @@ void APenguin::Multicast_Fire_Implementation(FVector MuzzleLocation, FRotator Mu
 
 void APenguin::Shoot(FVector MuzzleLocation, FRotator MuzzleRotation)
 {
-    // Attempt to fire a projectile.
-    if (ProjectileClass)
+    if (bCanShoot)
     {
-        UWorld* World = GetWorld();
-        if (World)
+        // Attempt to fire a projectile.
+        if (ProjectileClass)
         {
-            FActorSpawnParameters SpawnParams;
-            SpawnParams.Owner = this;
-            SpawnParams.Instigator = GetInstigator();
-
-            // Spawn the projectile at the muzzle.
-            AProjectile* Projectile = World->SpawnActor<AProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
-            if (Projectile)
+            UWorld* World = GetWorld();
+            if (World)
             {
-                // Set the projectile's initial trajectory.
-                Projectile->damage *= bonusDamage;
-                FVector LaunchDirection = MuzzleRotation.Vector();
-                Projectile->FireInDirection(LaunchDirection);
+                FActorSpawnParameters SpawnParams;
+                SpawnParams.Owner = this;
+                SpawnParams.Instigator = GetInstigator();
+
+                if (CheeseBlock)
+                {
+                    //Set Cheese Block as invisible
+                    CheeseBlock->SetVisibility(false);
+
+                    //Activate timer
+                    GetWorld()->GetTimerManager().SetTimer(ShootTimer, this, &APenguin::ReactivateShooting, ShootStall, false);
+                    bCanShoot = false;
+                }
+                // Spawn the projectile at the muzzle.
+                AProjectile* Projectile = World->SpawnActor<AProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+                if (Projectile)
+                {
+                    // Set the projectile's initial trajectory.
+                    Projectile->damage *= DamageBoostMultiplier;
+                    Projectile->Mesh->SetRelativeRotation(CheeseBlock->GetRelativeRotation());
+                    FVector LaunchDirection = MuzzleRotation.Vector();
+                    Projectile->FireInDirection(LaunchDirection);
+                }
             }
         }
     }
+}
+
+void APenguin::ReactivateShooting()
+{
+    CheeseBlock->SetVisibility(true);
+
+    bCanShoot = true;
 }

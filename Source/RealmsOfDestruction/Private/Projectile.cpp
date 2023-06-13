@@ -25,6 +25,13 @@ AProjectile::AProjectile()
 	ProjectileMovementComponent->Bounciness = 0.3f;
 	ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
 	InitialLifeSpan = 3.0f;
+
+	// Create a first person camera component.
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	check(Mesh != nullptr);
+
+	Mesh->SetupAttachment(CollisionComponent);
+
 }
 
 // Called when the game starts or when spawned
@@ -68,17 +75,21 @@ void AProjectile::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 		//Apply damage to target
 		if (Target->HasAuthority())
 		{
-			Target->CharacterTakeDamage(damage);
-			//Killed other player
-			if (Target->getCharacterState() == ECharacterState::Dead)
+			if (ARealmsPlayerState* ShooterPS = Shooter->GetPlayerState<ARealmsPlayerState>())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Other Character Died"));
-
-				if (ARealmsPlayerState* state = Shooter->GetPlayerState<ARealmsPlayerState>())
+				if (ARealmsPlayerState* TargetPS = Target->GetPlayerState<ARealmsPlayerState>())
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Adding Kill..."));
+					//Apply damage if shooter and target are from different teams or if one is not in a team
+					if (ShooterPS->GetTeam() == ETeam::NoTeam || ShooterPS->GetTeam() != TargetPS->GetTeam())
+					{
+						Target->CharacterTakeDamage(damage);
 
-					state->AddKill();
+						//Add kill to shooter if target player died
+						if (Target->getCharacterState() == ECharacterState::Dead)
+						{
+							ShooterPS->AddKill();
+						}
+					}
 				}
 			}
 		}

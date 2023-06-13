@@ -3,16 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "RealmsGameMode.h"
 #include "FreeForAll.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class REALMSOFDESTRUCTION_API AFreeForAll : public AGameModeBase
+class REALMSOFDESTRUCTION_API AFreeForAll : public ARealmsGameMode
 {
 	GENERATED_BODY()
-private:
-
 };

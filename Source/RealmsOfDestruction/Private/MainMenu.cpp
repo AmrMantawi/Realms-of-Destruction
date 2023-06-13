@@ -9,6 +9,7 @@
 
 void UMainMenu::MenuSetup()
 {
+	//Set player user name
 	EOSInstance = GetGameInstance<UEOSGameInstance>();
 	if (EOSInstance)
 	{
@@ -19,40 +20,23 @@ void UMainMenu::MenuSetup()
 
 void UMainMenu::DisplaySessions(UPanelWidget* SessionEntryPanel)
 {
+	//Fill in contents of session entry panel with available entries
 	if(EOSInstance)
 	{
-
-		EOSInstance->FindSessions(SessionEntryPanel, EntryClass);
-		/*
-		SessionIndex = 0;
-		UE_LOG(LogTemp, Warning, TEXT("Success: %d Sessions"), AvailableSessions.Num());
-		for (FOnlineSessionSearchResult UserSession : AvailableSessions)
-		{
-			SessionEntry = CreateWidget<UEntry>(this, EOSInstance->FindSessions());
-			SessionEntryPanel->AddChild(SessionEntry);
-			//SessionEntry->Name->Text = FText::FromString(UserSession.Session.OwningUserName);
-			//SessionEntry->Capacity->Text = FText::FromString(FString::FromInt(UserSession.Session.NumOpenPublicConnections));
-			//SessionEntry->JoinButton->OnClicked.AddDynamic(this, &ThisClass::JoinUserSession);
-			UE_LOG(LogTemp, Warning, TEXT("The integer value is: %d"), SessionIndex);
-			SessionIndex++;
-		}
-		*/
+		EOSInstance->FindCustomGameSessions(SessionEntryPanel, EntryClass);
 	}
-}
-
-void UMainMenu::JoinUserSession()
-{
-	//EOSInstance->JoinUserSession(SessionIndex);
 }
 
 void UMainMenu::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
 {
+	//Clear UI
 	MenuTearDown();
 	Super::OnLevelRemovedFromWorld(InLevel, InWorld);
 }
 
 void UMainMenu::MenuTearDown()
 {
+	//Clear UI
 	RemoveFromParent();
 	UWorld* World = GetWorld();
 	if (World)
@@ -64,5 +48,13 @@ void UMainMenu::MenuTearDown()
 			PlayerController->SetInputMode(InputModeData);
 			PlayerController->SetShowMouseCursor(false);
 		}
+	}
+}
+
+void UMainMenu::PracticeGame() 
+{
+	if (UWorld* World = GetWorld())
+	{
+		World->ServerTravel("/Game/Maps/PracticeMap");
 	}
 }

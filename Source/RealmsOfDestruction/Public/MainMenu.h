@@ -23,30 +23,34 @@ class REALMSOFDESTRUCTION_API UMainMenu : public UUserWidget
 
 public:
 
-	UFUNCTION(BlueprintCallable)
+	//Set default values of menu
+	UFUNCTION(BlueprintCallable, Category = "Game Manager")
 	void MenuSetup();
 
+	//Display available sessions
 	UFUNCTION(BlueprintCallable)
 	void DisplaySessions(UPanelWidget* SessionEntryPanel);
 
-	void JoinUserSession();
-
-	int SessionIndex;
-
 	class UEOSGameInstance* EOSInstance;
 
+	//Class of entry for server list
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UEntry> EntryClass;
+	UPROPERTY()
+	class UEntry* SessionEntry;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-		UTextBlock* UserNameText;
+	UTextBlock* UserNameText;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UButton* SettingsButton;
 
-	UPROPERTY()
-	class UEntry* SessionEntry;
+	//Trasport player to practice level
+	UFUNCTION(BlueprintCallable, Category = "Game Manager")
+	void PracticeGame();
+
 private:
+	//Handle Menu teardown
 	void MenuTearDown();
 
 protected:

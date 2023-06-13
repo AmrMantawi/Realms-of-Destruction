@@ -16,16 +16,7 @@ UCLASS()
 class REALMSOFDESTRUCTION_API UPlayesrDisplay : public UUserWidget
 {
 	GENERATED_BODY()
-	
+public:
 	virtual void NativeConstruct() override;
-
-	void UpdateUI();
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UPlayerEntry> EntryClass;
-
-	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	UVerticalBox* PlayerList;
-
 
 };

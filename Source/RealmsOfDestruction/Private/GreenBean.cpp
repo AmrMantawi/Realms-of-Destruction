@@ -87,6 +87,7 @@ void AGreenBean::Fire()
                 Shoot(MuzzleLocation2->GetComponentLocation(), MuzzleRotation);
                 //Client
                 Server_Fire(MuzzleLocation2->GetComponentLocation(), MuzzleRotation);
+
                 Shoot(MuzzleLocation3->GetComponentLocation(), MuzzleRotation);
                 //Client
                 Server_Fire(MuzzleLocation3->GetComponentLocation(), MuzzleRotation);
@@ -122,7 +123,7 @@ void AGreenBean::Fire()
                 if (Projectile)
                 {
                     // Set the projectile's initial trajectory.
-                    Projectile->damage *= bonusDamage;
+                    Projectile->damage *= DamageBoostMultiplier;
                     FVector LaunchDirection = MuzzleRotation.Vector();
                     Projectile->FireInDirection(LaunchDirection);
                 }

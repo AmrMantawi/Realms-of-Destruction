@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "RealmsPlayerState.h"
-#include "RealmsGameState.h"
 #include "Net/UnrealNetwork.h"
 
 ARealmsPlayerState::ARealmsPlayerState() {
@@ -26,23 +25,19 @@ void ARealmsPlayerState::BeginPlay()
 		if (PC->IsLocalController())
 		{
 			Server_PlayerSetup(GetPlayerId(), GetPlayerName());
-			//Initialize Values 
-			//PlayerID = GetPlayerId();
-			//DisplayName = GetPlayerName();
-			//Kills = 0;
-			//Deaths = 0;
-			//Add To PlayerMap
 		}
 	}
 }
 
 //
 void ARealmsPlayerState::Server_PlayerSetup_Implementation(int32 UserID, const FString& Username) {
+	//Initialize Player Data
 	ID = UserID;
 	Name = Username;
 	if (ARealmsGameState* GameState = GetWorld()->GetGameState<ARealmsGameState>())
 	{
 		GameState->Server_HandleStartingPlayer_Implementation(UserID, Username);
+		Team = GameState->GetPlayerData(UserID).Team;
 	}
 }
 
@@ -56,7 +51,6 @@ int32 ARealmsPlayerState::GetKills()
 void ARealmsPlayerState::AddKill()
 {
 	Server_AddKill();
-	UE_LOG(LogTemp, Warning, TEXT("Kills: %d"), Kills);
 }
 
 void ARealmsPlayerState::Server_AddKill_Implementation()
@@ -92,6 +86,11 @@ void ARealmsPlayerState::Server_AddDeath_Implementation()
 		//Update data in game state
 		GameState->Server_UpdatePlayerData(ID, Kills, Deaths);
 	}
+}
+
+ETeam ARealmsPlayerState::GetTeam()
+{
+	return Team;
 }
 
 FString ARealmsPlayerState::GetDisplayName()

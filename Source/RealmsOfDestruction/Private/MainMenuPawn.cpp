@@ -26,6 +26,7 @@ void AMainMenuPawn::PossessedBy(AController* NewController)
 
         FInputModeGameAndUI GameAndUIMode;
 
+        //Create UI when pawn is possessed
         PC->SetInputMode(GameAndUIMode);
         PC->SetShowMouseCursor(true);
         if (MainMenuClass)
@@ -66,6 +67,7 @@ void AMainMenuPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("Pause Game", IE_Pressed, this, &AMainMenuPawn::ToggleSettingsMenu);
 }
 
+// Toggle Settings Menu On and OFF
 void AMainMenuPawn::ToggleSettingsMenu()
 {
     if (playerSettingsMenu)

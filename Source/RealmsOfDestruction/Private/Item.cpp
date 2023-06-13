@@ -12,24 +12,24 @@ AItem::AItem()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Create a first person camera component.
-	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	// Create collision component and setup overlap event
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	SetRootComponent(CollisionComponent);
-	MeshComponent->SetupAttachment(CollisionComponent);
 	CollisionComponent->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 	CollisionComponent->SetSphereRadius(25.f);
+	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnOverlap);
 
-	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnHit);
+	// Create mesh component
+	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	MeshComponent->SetupAttachment(CollisionComponent);
 	
 	bReplicates = true;
-
 }
 
 void AItem::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AItem, itemState);
+	DOREPLIFETIME(AItem, ItemState);
 }
 
 // Called when the game starts or when spawned
@@ -37,7 +37,7 @@ void AItem::BeginPlay()
 {
 	Super::BeginPlay();
 
-	itemState = EItemState::Active;
+	ItemState = EItemState::Active;
 }
 
 // Called every frame
@@ -49,44 +49,43 @@ void AItem::Tick(float DeltaTime)
 
 void AItem::OnRep_HandleItemState()
 {
-
-	if (itemState == EItemState::Active)
+	if (ItemState == EItemState::Active)
 	{
-
+		// Handle on state change to active
 		Activate();
 	}
-	else if (itemState == EItemState::Inactive)
+	else
 	{
-
+		// Handle on state change to inactive
 		Deactivate();
 	}
 }
 
-void AItem::OnHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AItem::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	ACharacterMovement* Target = Cast<ACharacterMovement>(OtherActor);
-	//UE_LOG(LogTemp, Warning, TEXT("powerup Out"));
 
-	if (Target && Target->GetLocalRole() == ROLE_Authority && itemState == EItemState::Active)
+	if (Target && Target->GetLocalRole() == ROLE_Authority && ItemState == EItemState::Active)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("powerup"));
-		if (health)
+		//Apply item effects
+		if (bHealthBoost)
 		{
-			Target->GainHealth(healthValue);
+			Target->GainHealth(HealthValue);
 		}
-		if (shield)
+		if (bShieldBoost)
 		{
-			Target->GainShield(shieldValue);
+			Target->GainShield(ShieldValue);
 		}
-		if (speed)
+		if (bSpeedBoost)
 		{
-			Target->MultiplySpeed(speedValue);
+			Target->MultiplySpeed(SpeedValue);
 		}
-		if (strength)
+		if (bStrengthBoost)
 		{
-			Target->MultiplyDamage(strengthValue);
+			Target->MultiplyDamage(StrengthValue);
 		}
 
+		//Deactivate item
 		Deactivate();
 	}
 }
@@ -94,30 +93,29 @@ void AItem::OnHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrim
 
 void AItem::Activate()
 {
+	//Set mesh to visible
 	MeshComponent->SetVisibility(true);
 
 	if (HasAuthority())
 	{
-
-		itemState = EItemState::Active;
+		//Set item state to active
+		ItemState = EItemState::Active;
 	}
-
-	
 }
 
 void AItem::Deactivate()
 {
+	//Set mesh to invisible
 	MeshComponent->SetVisibility(false);
 
 
 	if (HasAuthority())
 	{
-
-		itemState = EItemState::Inactive;
+		//Set item state to Inactive
+		ItemState = EItemState::Inactive;
 
 		//Activate timer
-		GetWorld()->GetTimerManager().SetTimer(PickupRespawnTimer, this, &AItem::Activate, respawnTime, false);
-
+		GetWorld()->GetTimerManager().SetTimer(PickupRespawnTimer, this, &AItem::Activate, RespawnTime, false);
 	}
 }
 

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "CharacterMovement.h"
 #include "Components/BoxComponent.h"
+#include "RealmsPlayerState.h"
 #include "BuffPotato.generated.h"
 
 /**
@@ -26,20 +27,20 @@ public:
 	UPROPERTY(replicated, BlueprintReadOnly)
 	bool isPunching = false;
 
-	UPROPERTY(EditDefaultsOnly, Category = Hand)
+	UPROPERTY(EditAnywhere, Category = Hand)
 	UBoxComponent* RightHand;
 
-	UPROPERTY(EditDefaultsOnly, Category = Hand)
+	UPROPERTY(EditAnywhere, Category = Hand)
 	UBoxComponent* LeftHand;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Punch")
 	float PunchForce = 1000.0f;
 
-	/*UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);*/
+	UFUNCTION()
+	void OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void OnPunchOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
@@ -52,5 +53,5 @@ public:
 	void Server_StopPunch_Implementation();
 
 	UPROPERTY(EditAnywhere, Category = "Punch")
-	float damage;
+	float damage = 30.0f;
 };
