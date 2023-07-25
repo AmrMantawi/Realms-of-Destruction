@@ -15,20 +15,35 @@ class REALMSOFDESTRUCTION_API ARealmsGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 public:
-	//Get class of players display
-	TSubclassOf<UPlayesrDisplay> GetPlayerDisplayClass();
 
-	//Class of players display UI
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UPlayesrDisplay> PlayerDisplayClass;
+	//Get class of players display
+	UFUNCTION()
+	TSubclassOf<UPlayesrDisplay> GetPlayerDisplayClass();
 
 	//Get winnning kill count
 	UFUNCTION()
 	int32 GetWinningKillCount();
 
+	//Get end game UI based on match outcome
+	UFUNCTION()
+	TSubclassOf<UUserWidget> GetEndGameUIClass(bool bIsWinner);
+
+
 protected:
 	//Number of kills required to win the game
 	UPROPERTY(EditDefaultsOnly)
 	int32 WinningKillCount;
+
+	//Class of players display UI
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UPlayesrDisplay> PlayerDisplayClass;
+
+	//Winning screen UI
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> WinningScreenUI;
+
+	//Losing screen UI
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> LosingScreenUI;
 
 };

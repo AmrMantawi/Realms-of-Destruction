@@ -18,27 +18,31 @@ class REALMSOFDESTRUCTION_API UCharacterSelectionMenu : public UUserWidget
 	GENERATED_BODY()
 
 public:
-
-	//List Of Characters
-	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<class ACharacterMovement>> CharacterList;
-
+	//Set selected character
 	UFUNCTION(BlueprintCallable)
-	void CharacterSelectionHelper(int characterIndex);
+	void SetSelectedCharacter(TSubclassOf<class ACharacterMovement> Character);
 
-
+	//Lock in character
 	UFUNCTION(BlueprintCallable)
 	void SpawnCharacter();
+protected:
 
-	/*UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "User Interface|Viewport", meta = (AdvancedDisplay = "ZOrder"))
-	bool AddToPlayerScreen(int32 ZOrder = 0) override;*/
+	UFUNCTION()
+	virtual void NativeConstruct() override;
+
+	//List Of Characters
+	UPROPERTY(EditDefaultsOnly)
+	TArray<TSubclassOf<class ACharacterMovement>> CharacterList;
+
+	//Is character locked in
+	UPROPERTY()
+	bool bCharacterSelected;
 
 private:
-	UFUNCTION()
-	void SelectCharacter();
-
-
-
+	//Current selected chatacter
 	UPROPERTY()
 	TSubclassOf<class ACharacterMovement> SelectedCharacter;
+
+	UPROPERTY()
+	FTimerHandle TimerHandle;
 };

@@ -12,15 +12,11 @@ AMainMenuPawn::AMainMenuPawn()
 
 
 }
-
 void AMainMenuPawn::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
 
-    PC = GetController<APlayerController>();
-    check(PC);
-
-    if (PC)
+    if (APlayerController* PC = GetController<APlayerController>())
     {
         UE_LOG(LogTemp, Warning, TEXT("Menu Mode"));
 
@@ -51,6 +47,13 @@ void AMainMenuPawn::BeginPlay()
 {
 	Super::BeginPlay();
 	
+    if (IsLocallyControlled())
+    {
+        if (APlayerController* PC = GetController<APlayerController>())
+        {
+            PC->SetInputMode(FInputModeGameAndUI());
+        }
+    }
 }
 
 // Called every frame

@@ -33,8 +33,24 @@ public:
     //Get data of player
     virtual FPlayerData GetPlayerData(int32 PlayerID) override;
 
+    //Give players time to select their chracters
+    UFUNCTION(BlueprintCallable)
+    void CharacterSelect();
+
 protected:
     virtual void BeginPlay() override;
+
+    // Handle logic or actions that should occur when the MatchState changes
+    virtual void OnRep_MatchState() override;
+
+    //Start game
+    UFUNCTION()
+    void StartGame();
+
+    //End game
+    UFUNCTION(NetMulticast,Reliable)
+    void Multicast_EndGame(int32 WinningPlayerID);
+    void Multicast_EndGame_Implementation(int32 WinningPlayerID);
 
 private:
     //Data of players in game

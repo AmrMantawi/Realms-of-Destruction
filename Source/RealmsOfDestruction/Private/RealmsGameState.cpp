@@ -16,6 +16,7 @@ void ARealmsGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ARealmsGameState, MatchState);
 	DOREPLIFETIME(ARealmsGameState, WinningKillCount);
+	DOREPLIFETIME(ARealmsGameState, TimerValue);
 }
 
 EMatchState ARealmsGameState::GetMatchState()
@@ -60,4 +61,15 @@ void ARealmsGameState::OnRep_MatchState()
 		    //PlayerController->DisplayWinningScreen();
 		}
 	}
+}
+
+float ARealmsGameState::GetRemainingTimerTime()
+{
+	Server_GetRemainingTime();
+	return TimerValue;
+}
+
+void ARealmsGameState::Server_GetRemainingTime_Implementation()
+{
+	TimerValue = GetWorld()->GetTimerManager().GetTimerRemaining(TimerHandle);
 }

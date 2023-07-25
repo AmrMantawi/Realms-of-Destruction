@@ -1,37 +1,54 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "CharacterSelectionMenu.h"
+#include "RealmsGameState.h"
 
-void UCharacterSelectionMenu::CharacterSelectionHelper(int characterIndex)
+void UCharacterSelectionMenu::NativeConstruct()
 {
-	if(CharacterList[characterIndex])
-	{
-		SelectedCharacter = CharacterList[characterIndex];
-		SelectCharacter();
-	}
-}
+	bCharacterSelected = false;
+	UE_LOG(LogTemp, Warning, TEXT("Added character selection to player screen"));
 
-
-void UCharacterSelectionMenu::SelectCharacter()
-{
-	
-	if (APawn* PlayerPawn = GetOwningPlayerPawn())
+	//Force character Selection in 10 seconds
+	if (ARealmsGameState* GameState = Cast<ARealmsGameState>(GetWorld()->GetGameState()))
 	{
-		if (AGamePlayerController* PC = GetWorld()->GetFirstPlayerController<AGamePlayerController>())
+		EMatchState MatchState = GameState->GetMatchState();
+		if (MatchState == EMatchState::Character_Selection)
 		{
-			PC->SelectCharacter(SelectedCharacter);
+			if (float TimerTime = GameState->GetRemainingTimerTime())
+			{
+				if (TimerTime > 0)
+				{
+					GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UCharacterSelectionMenu::SpawnCharacter, TimerTime, false);
+				}
+			}
 		}
 	}
 }
 
+void UCharacterSelectionMenu::SetSelectedCharacter(TSubclassOf<class ACharacterMovement> Character)
+{	
+	//Set selected character
+	SelectedCharacter = Character;
+}
+
+
 void UCharacterSelectionMenu::SpawnCharacter()
 {
-	if (APawn* PlayerPawn = GetOwningPlayerPawn())
+	//Set selected chatacter in player controller
+	if (SelectedCharacter)
 	{
 		if (AGamePlayerController* PC = GetWorld()->GetFirstPlayerController<AGamePlayerController>())
 		{
-			PC->SpawnCharacter();
-			this->SetVisibility(ESlateVisibility::Hidden);
+			PC->SelectCharacter(SelectedCharacter);
+			if (ARealmsGameState* GameState = Cast<ARealmsGameState>(GetWorld()->GetGameState()))
+			{
+				//Spawn character and remove UI 
+				EMatchState MatchState = GameState->GetMatchState();
+				if (MatchState == EMatchState::Not_Started || MatchState == EMatchState::In_Progress)
+				{
+					PC->SpawnCharacter();
+				}
+			}
 		}
 	}
 }

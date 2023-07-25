@@ -45,9 +45,6 @@ public:
 	UFUNCTION()
 	FString GetDisplayName();
 
-
-
-
 private:
 	UPROPERTY(Replicated)
 	int32 ID;

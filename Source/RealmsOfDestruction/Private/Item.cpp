@@ -118,5 +118,3 @@ void AItem::Deactivate()
 		GetWorld()->GetTimerManager().SetTimer(PickupRespawnTimer, this, &AItem::Activate, RespawnTime, false);
 	}
 }
-
-

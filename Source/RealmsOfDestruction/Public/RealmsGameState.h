@@ -83,14 +83,6 @@ public:
     UFUNCTION()
     virtual FPlayerData GetPlayerData(int32 PlayerID) PURE_VIRTUAL(ARealmsGameState::Server_UpdatePlayerData_Implementation, return FPlayerData(););
 
-    //Start game
-    UFUNCTION()
-    virtual void StartGame() PURE_VIRTUAL(ARealmsGameState::StartGame, );
-
-    //End game
-    UFUNCTION()
-    virtual void EndGame() PURE_VIRTUAL(ARealmsGameState::EndGame, );
-
     //Get match state
     UFUNCTION()
     EMatchState GetMatchState();
@@ -98,6 +90,10 @@ public:
     //Update match state
     UFUNCTION()
     void SetMatchState(EMatchState NewMatchState);
+
+    //Get time untill game is started
+    UFUNCTION(BlueprintCallable)
+    float GetRemainingTimerTime();
 
 protected: 
     virtual void BeginPlay() override;
@@ -112,6 +108,16 @@ protected:
 
     // Handle logic or actions that should occur when the MatchState changes
     UFUNCTION()
-    void OnRep_MatchState();
+    virtual void OnRep_MatchState();
 
+    //Get time untill game is started
+    UFUNCTION(Server, Reliable)
+    void Server_GetRemainingTime();
+    void Server_GetRemainingTime_Implementation();
+
+    UPROPERTY()
+    FTimerHandle TimerHandle;
+
+    UPROPERTY(Replicated)
+    float TimerValue;
 };

@@ -35,10 +35,10 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION()
-	void setCharacterState(ECharacterState state);
+	void SetCharacterState(ECharacterState State);
 
 	UFUNCTION()
-	ECharacterState getCharacterState();
+	ECharacterState GetCharacterState();
 protected:
 	UFUNCTION()
 	void Setup();
@@ -51,15 +51,6 @@ protected:
 	void Client_UnSetup();
 	void Client_UnSetup_Implementation();
 
-
-	//Toggle Character Selection Menu
-	UFUNCTION()
-	void ToggleCharacterSelectionMenu();
-
-	//Toggle Pause Menu
-	UFUNCTION()
-	void TogglePauseMenu();
-
 	UFUNCTION()
 	virtual void PossessedBy(AController* NewController) override;
 
@@ -68,27 +59,9 @@ protected:
 
 private:
 	UPROPERTY()
-	class UPauseMenu* PlayerPauseMenu;
-
-	UPROPERTY()
-	class UCharacterSelectionMenu* PlayerCharacterSelection;
-
-	UPROPERTY()
-	class USettingsMenu* PlayerSettingsMenu;
-
-	UPROPERTY()
 	class UHealthBar* PlayerHealthBar;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class UCharacterSelectionMenu> CharacterSelectionClass;
-
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class UPauseMenu> PauseMenuClass;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class USettingsMenu> SettingsMenuClass;
-
-	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthBar> HealthBarClass;
 	UPROPERTY()
 	bool bPauseMenuDisplayed = false;
@@ -102,12 +75,6 @@ protected:
 
 	UFUNCTION()
 	void PlayMode();
-
-	UPROPERTY()
-	bool bSettingsDisplayed = false;
-
-	UFUNCTION()
-	void ToggleSettingsMenu();
 
 	UFUNCTION()
 	void OnRep_HandleCharacterState();

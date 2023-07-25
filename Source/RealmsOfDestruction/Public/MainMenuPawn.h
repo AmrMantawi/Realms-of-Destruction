@@ -16,6 +16,7 @@ class REALMSOFDESTRUCTION_API AMainMenuPawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	AMainMenuPawn();
+	
 	UPROPERTY()
 	class USettingsMenu* playerSettingsMenu;
 
@@ -33,11 +34,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UMainMenu> MainMenuClass;
-
-	//UPROPERTY()
-	//class APlayerController* playerController;
-
-	APlayerController* PC;
 
 	virtual void PossessedBy(AController* NewController) override;
 

@@ -66,15 +66,15 @@ public:
 	UFUNCTION()
 	void Activate();
 
-	UPROPERTY(EditDefaultsOnly)
-	float RespawnTime = 2.0f;
-
 	UPROPERTY()
 	FTimerHandle PickupRespawnTimer;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditDefaultsOnly)
+	float RespawnTime = 2.0f;
 
 public:	
 	// Called every frame

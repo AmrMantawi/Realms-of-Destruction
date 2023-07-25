@@ -76,7 +76,7 @@ void ABuffPotato::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 						Target->CharacterTakeDamage(damage);
 
 						//Add kill to shooter if target player died
-						if (Target->getCharacterState() == ECharacterState::Dead)
+						if (Target->GetCharacterState() == ECharacterState::Dead)
 						{
 							ShooterPS->AddKill();
 						}

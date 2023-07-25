@@ -5,10 +5,6 @@
 #include "Blueprint/UserWidget.h"
 #include "HealthBar.h"
 #include "GamePlayerController.h"
-#include "CharacterSelectionMenu.h"
-#include "PlayesrDisplay.h"
-#include "SettingsMenu.h"
-#include "PauseMenu.h"
 #include "RealmsPlayerState.h"
 #include "Components/PostProcessComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -150,21 +146,6 @@ void ACharacterMovement::Client_UnSetup_Implementation()
             PlayerHealthBar->RemoveFromParent();
             PlayerHealthBar = nullptr;
         }
-        if (PlayerPauseMenu)
-        {
-            PlayerPauseMenu->RemoveFromParent();
-            PlayerPauseMenu = nullptr;
-        }
-        if (PlayerSettingsMenu)
-        {
-            PlayerSettingsMenu->RemoveFromParent();
-            PlayerSettingsMenu = nullptr;
-        }
-        if (PlayerCharacterSelection)
-        {
-            PlayerCharacterSelection->RemoveFromParent();
-            PlayerCharacterSelection = nullptr;
-        }
     }
 
 }
@@ -184,112 +165,6 @@ void ACharacterMovement::Client_Setup_Implementation()
             PlayerHealthBar->SetHealth(1);
             PlayerHealthBar->SetShield(1);
         }
-
-        //Create character selection UI
-        if (CharacterSelectionClass)
-        {
-            PlayerCharacterSelection = CreateWidget<UCharacterSelectionMenu>(PC, CharacterSelectionClass);
-        }
-
-        //Create pause menu UI
-        if (PauseMenuClass)
-        {
-            if (SettingsMenuClass)
-            {
-                PlayerSettingsMenu = CreateWidget<USettingsMenu>(PC, SettingsMenuClass);
-            }
-            //Setup pause menu button functions
-            PlayerPauseMenu = CreateWidget<UPauseMenu>(PC, PauseMenuClass);
-            PlayerPauseMenu->Resume->OnClicked.AddDynamic(this, &ACharacterMovement::TogglePauseMenu);
-            PlayerPauseMenu->Settings->OnClicked.AddDynamic(this, &ACharacterMovement::ToggleSettingsMenu);
-            PlayerPauseMenu->ChangeCharacter->OnClicked.AddDynamic(this, &ACharacterMovement::ToggleCharacterSelectionMenu);
-
-        }
-    }
-}
-
-//Toggle character selection menu
-void ACharacterMovement::ToggleCharacterSelectionMenu()
-{
-    //Toggle character selection menu
-    if (PlayerCharacterSelection)
-    {
-        //Diplay UI
-        if (!bCharacterSelectionMenuDisplayed)
-        {
-            PlayerCharacterSelection->AddToPlayerScreen();
-            bCharacterSelectionMenuDisplayed = true;
-        }
-        //Hide UI
-        else
-        {
-            PlayerCharacterSelection->RemoveFromParent();
-            bCharacterSelectionMenuDisplayed = false;
-        }
-    }
-}
-
-//Toggle pause menu
-void ACharacterMovement::TogglePauseMenu()
-{
-    //Toggle pause menu
-    if (PlayerPauseMenu)
-    {
-        if (!bPauseMenuDisplayed)
-        {
-            //Hide character selection menu if displayed
-            if (bCharacterSelectionMenuDisplayed)
-            {
-                PlayerPauseMenu->ChangeCharacter->SetVisibility(ESlateVisibility::Hidden);
-            }
-            //Display pause if character selection menu not displyed
-            else
-            {
-                PlayerPauseMenu->ChangeCharacter->SetVisibility(ESlateVisibility::Visible);
-                PlayerPauseMenu->AddToPlayerScreen();
-                bPauseMenuDisplayed = true;
-                MenuMode();
-            }
-        }
-        else
-        {
-            //Hide settings menu
-            if (bSettingsDisplayed)
-            {
-                PlayerSettingsMenu->RemoveFromParent();
-                bSettingsDisplayed = false;
-            }
-            //Hide character selection menu
-            else if (bCharacterSelectionMenuDisplayed)
-            {
-                PlayerCharacterSelection->RemoveFromParent();
-                bCharacterSelectionMenuDisplayed = false;
-            }
-            //Hide pause menu
-            else {
-                PlayerPauseMenu->RemoveFromParent();
-                bPauseMenuDisplayed = false;
-                PlayMode();
-            }
-        }
-    }
-}
-
-//Toggle settings menu
-void ACharacterMovement::ToggleSettingsMenu()
-{
-    if (PlayerSettingsMenu)
-    {
-        if (!bSettingsDisplayed)
-        {
-            PlayerSettingsMenu->AddToPlayerScreen();
-            bSettingsDisplayed = true;
-        }
-        else
-        {
-            PlayerSettingsMenu->RemoveFromParent();
-            bSettingsDisplayed = false;
-        }
     }
 }
 
@@ -300,7 +175,7 @@ void ACharacterMovement::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
     
     //Remove UI
-    Client_UnSetup_Implementation();
+    Client_UnSetup();
 }
 
 
@@ -329,9 +204,6 @@ void ACharacterMovement::SetupPlayerInputComponent(UInputComponent* PlayerInputC
     PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacterMovement::StopJump);
     PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACharacterMovement::StartSprint);
     PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACharacterMovement::StopSprint);
-
-    // Set up menu bindings 
-    PlayerInputComponent->BindAction("Pause Game", IE_Pressed, this, &ACharacterMovement::TogglePauseMenu);
 
 }
 
@@ -615,18 +487,16 @@ void ACharacterMovement::PlayMode()
 
 }
 
-
-
 //Character set chracter's state
-void ACharacterMovement::setCharacterState(ECharacterState state)
+void ACharacterMovement::SetCharacterState(ECharacterState State)
 {
     UE_LOG(LogTemp, Warning, TEXT("Setting Character State"));
-    CharacterState = state;
+    CharacterState = State;
     OnRep_HandleCharacterState();
 }
 
 //Get chracter's state
-ECharacterState ACharacterMovement::getCharacterState()
+ECharacterState ACharacterMovement::GetCharacterState()
 {
     return CharacterState;
 }
@@ -646,10 +516,11 @@ void ACharacterMovement::Die()
 
     if (HasAuthority())
     {
+        SetCharacterState(ECharacterState::Dead);
         //Record death
-        if (ARealmsPlayerState* state = this->GetPlayerState<ARealmsPlayerState>())
+        if (ARealmsPlayerState* State = this->GetPlayerState<ARealmsPlayerState>())
         {
-            state->AddDeath();
+            State->AddDeath();
         }
         //Kill player
         if (AGamePlayerController* PC = GetController<AGamePlayerController>())
