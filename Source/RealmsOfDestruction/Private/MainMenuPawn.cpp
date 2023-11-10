@@ -8,9 +8,6 @@ AMainMenuPawn::AMainMenuPawn()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-
-
 }
 void AMainMenuPawn::PossessedBy(AController* NewController)
 {
@@ -29,15 +26,8 @@ void AMainMenuPawn::PossessedBy(AController* NewController)
         {
             //Create Main Menu
 
-            playerMainMenu = CreateWidget<UMainMenu>(PC, MainMenuClass);
-            playerMainMenu->AddToPlayerScreen();
-
-            if (SettingsMenuClass)
-            {
-                //Create Pause Menu
-                playerSettingsMenu = CreateWidget<USettingsMenu>(PC, SettingsMenuClass);
-                playerMainMenu->SettingsButton->OnClicked.AddDynamic(this, &AMainMenuPawn::ToggleSettingsMenu);
-            }
+            PlayerMainMenu = CreateWidget<UMainMenu>(PC, MainMenuClass);
+            PlayerMainMenu->AddToPlayerScreen();
         }
     }
 }
@@ -67,23 +57,14 @@ void AMainMenuPawn::Tick(float DeltaTime)
 void AMainMenuPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Pause Game", IE_Pressed, this, &AMainMenuPawn::ToggleSettingsMenu);
+	PlayerInputComponent->BindAction("Pause Game", IE_Pressed, this, &AMainMenuPawn::TogglePauseMenu);
 }
 
-// Toggle Settings Menu On and OFF
-void AMainMenuPawn::ToggleSettingsMenu()
+// Toggle Pause Menu On and OFF
+void AMainMenuPawn::TogglePauseMenu()
 {
-    if (playerSettingsMenu)
+    if (PlayerMainMenu)
     {
-        if (!settingsDisplayed)
-        {
-            playerSettingsMenu->AddToPlayerScreen();
-            settingsDisplayed = true;
-        }
-        else
-        {
-            playerSettingsMenu->RemoveFromParent();
-            settingsDisplayed = false;
-        }
+        PlayerMainMenu->TogglePauseMenu();
     }
 }

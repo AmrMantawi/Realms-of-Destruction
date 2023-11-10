@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Item.generated.h"
 
 UENUM()
@@ -68,6 +69,9 @@ public:
 
 	UPROPERTY()
 	FTimerHandle PickupRespawnTimer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UNiagaraSystem* NiagraSystem;
 
 protected:
 	// Called when the game starts or when spawned

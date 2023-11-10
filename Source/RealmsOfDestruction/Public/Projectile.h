@@ -53,10 +53,15 @@ public:
 	UPROPERTY(EditAnywhere)
 	float Speed = 3000.0f;
 
+	UPROPERTY(EditDefaultsOnly, Category = Projectile)
+	bool bDestroyOnCollision = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UNiagaraSystem* HitSystem;
 
 	// Projectile mesh
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* Mesh;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };

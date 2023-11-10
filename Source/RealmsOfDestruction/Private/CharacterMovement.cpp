@@ -7,6 +7,7 @@
 #include "GamePlayerController.h"
 #include "RealmsPlayerState.h"
 #include "Components/PostProcessComponent.h"
+#include "NiagaraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -33,7 +34,10 @@ ACharacterMovement::ACharacterMovement()
     //Create post processing component
     PostProcessComponent = CreateDefaultSubobject<UPostProcessComponent>(TEXT("PostProcessComponent"));
     PostProcessComponent->SetupAttachment(GetRootComponent());
-
+    
+    //Create niagra lightning effect component
+    LightningTrail = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LightningTrail"));
+    LightningTrail->SetupAttachment(GetRootComponent());
 }
 
 void ACharacterMovement::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
@@ -42,6 +46,7 @@ void ACharacterMovement::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >&
     DOREPLIFETIME(ACharacterMovement, CurrentHealth);
     DOREPLIFETIME(ACharacterMovement, CurrentShield);
     DOREPLIFETIME(ACharacterMovement, CharacterState);
+    DOREPLIFETIME(ACharacterMovement, bLightningEffectActive);
 }
 
 // Called when the game starts or when spawned
@@ -54,6 +59,10 @@ void ACharacterMovement::BeginPlay()
 
     OutlineCharacter();
 
+    if(LightningTrail)
+    {
+        LightningTrail->Deactivate();
+    }
 }
 
 void ACharacterMovement::OutlineCharacter()
@@ -184,6 +193,37 @@ void ACharacterMovement::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+    //Increase FOV
+    if (bFOVChange)
+    {
+        float CurrentFOV = FPSCameraComponent->FieldOfView;
+        //Speed boost activated
+        if (SpeedBoostMultiplier > 1)
+        {
+            if (CurrentFOV < 100)
+            {
+                FPSCameraComponent->SetFieldOfView(++CurrentFOV);
+            }
+            else
+            {
+                bFOVChange = false;
+            }
+        }
+        //Speed boost deactivated
+        else
+        {
+            if (CurrentFOV > 90)
+            {
+                FPSCameraComponent->SetFieldOfView(--CurrentFOV);
+            }
+            else
+            {
+                bFOVChange = false;
+            }
+        }
+        
+    }
+
 }
 
 // Called to bind functionality to input
@@ -204,6 +244,9 @@ void ACharacterMovement::SetupPlayerInputComponent(UInputComponent* PlayerInputC
     PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacterMovement::StopJump);
     PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACharacterMovement::StartSprint);
     PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACharacterMovement::StopSprint);
+
+    PlayerInputComponent->BindAction("Ability", IE_Pressed, this, &ACharacterMovement::Ability);
+    PlayerInputComponent->BindAction("Ultimate", IE_Pressed, this, &ACharacterMovement::Ultimate);
 
 }
 
@@ -372,38 +415,45 @@ void ACharacterMovement::ResetDamage()
 
 void ACharacterMovement::Client_SetDamage_Implementation(float PlayerDamageMultiplier = 1)
 {
-    if (IsLocallyControlled())
+    if (IsLocallyControlled() && PlayerHealthBar)
     {
         DamageBoostMultiplier = PlayerDamageMultiplier;
+
+        PlayerHealthBar->ShowStrength();
     }
 }
 
 void ACharacterMovement::Client_ResetDamage_Implementation()
 {
-    if (IsLocallyControlled())
+    if (IsLocallyControlled() && PlayerHealthBar)
     {
         GetCharacterMovement()->MaxWalkSpeed /= DamageBoostMultiplier;
+
+        PlayerHealthBar->HideStrength();
     }
 }
 
 
-//
 void ACharacterMovement::MultiplySpeed(float Value)
 {
     if (HasAuthority())
     {
-        //Server
+        
+        //Clear current speed multiplier and multiply with new multiplyer
         GetCharacterMovement()->MaxWalkSpeed /= SpeedBoostMultiplier;
-        SpeedBoostMultiplier *= Value;
+        SpeedBoostMultiplier = Value;
         GetCharacterMovement()->MaxWalkSpeed *= SpeedBoostMultiplier;
-        FPSCameraComponent->SetFieldOfView(100);
 
-        if (!IsLocallyControlled())
+
+        if (LightningTrail)
         {
-            //Client
-            Client_SetSpeed(Value);
+            LightningTrail->Activate();
         }
-        GetWorldTimerManager().SetTimer(TimerHandle, this, &ACharacterMovement::ResetSpeed, 1.0f, false, 3.0f);
+        bLightningEffectActive = true;
+
+        Client_SetSpeed(Value);
+
+        GetWorldTimerManager().SetTimer(TimerHandle, this, &ACharacterMovement::ResetSpeed, 1.0f, false, 5.0f);
     }    
 }
 
@@ -411,40 +461,63 @@ void ACharacterMovement::ResetSpeed()
 {
     if (HasAuthority())
     {
-        //Server
+        //Clear speed boost
         GetCharacterMovement()->MaxWalkSpeed /= SpeedBoostMultiplier;
         SpeedBoostMultiplier = 1;
-        FPSCameraComponent->SetFieldOfView(90);
-        if (!IsLocallyControlled())
-        {
-            //Client
-            Client_ResetSpeed();
 
+        if (LightningTrail)
+        {
+            LightningTrail->Deactivate();
         }
+        bLightningEffectActive = false;
+        Client_ResetSpeed();
     }
 }
 
 void ACharacterMovement::Client_SetSpeed_Implementation(float PlayerSpeedMultiplier = 1)
 {
-    if (IsLocallyControlled())
+    if (IsLocallyControlled() && PlayerHealthBar)
     {
+       //GetCharacterMovement()->MaxWalkSpeed /= SpeedBoostMultiplier;
         SpeedBoostMultiplier = PlayerSpeedMultiplier;
         GetCharacterMovement()->MaxWalkSpeed *= SpeedBoostMultiplier;
-        FPSCameraComponent->SetFieldOfView(100);
+        bFOVChange = true;
+
+        PlayerHealthBar->ShowSpeed();
     }
 }
 
 void ACharacterMovement::Client_ResetSpeed_Implementation()
 {
-    if (IsLocallyControlled())
+    if (IsLocallyControlled() && PlayerHealthBar)
     {
+        SpeedBoostMultiplier = 1;
         GetCharacterMovement()->MaxWalkSpeed /= SpeedBoostMultiplier;
-        FPSCameraComponent->SetFieldOfView(90);
+        bFOVChange = true;
+
+        PlayerHealthBar->HideSpeed();
     }
 }
 
-
-
+void ACharacterMovement::OnRep_LightningEffectActive()
+{
+    if (bLightningEffectActive)
+    {
+        // Activate lightning effect
+        if (LightningTrail)
+        {
+            LightningTrail->Activate();
+        }
+    }
+    else
+    {
+        // Deactivate lightning effect
+        if (LightningTrail)
+        {
+            LightningTrail->Deactivate();
+        }
+    }
+}
 
 void ACharacterMovement::Client_SetHealth_Implementation()
 {
@@ -545,4 +618,14 @@ void ACharacterMovement::DeadState()
     {
         this->SetLifeSpan(5);
     }
+}
+
+void ACharacterMovement::Ability()
+{
+
+}
+
+void ACharacterMovement::Ultimate()
+{
+
 }

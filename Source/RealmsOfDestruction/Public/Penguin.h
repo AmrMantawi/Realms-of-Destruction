@@ -28,15 +28,15 @@ public:
 
 	// Sends fire signal to server.
 	UFUNCTION(Reliable, Server)
-	void Server_Fire(FVector MuzzleLocation, FRotator MuzzleRotation);
-	void Server_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation);
+	void Server_Fire(FVector MuzzleLocation, FVector ShootVector);
+	void Server_Fire_Implementation(FVector MuzzleLocation, FVector ShootVector);
 
 	UFUNCTION(Reliable, NetMulticast)
-	void Multicast_Fire(FVector MuzzleLocation, FRotator MuzzleRotation);
-	void Multicast_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation);
+	void Multicast_Fire(FVector MuzzleLocation, FVector ShootVector);
+	void Multicast_Fire_Implementation(FVector MuzzleLocation, FVector ShootVector);
 
 	//Shoot Projectile at specified location and rotation
-	void Shoot(FVector MuzzleLocation, FRotator MuzzleRotation);
+	void Shoot(FVector MuzzleLocation, FVector ShootVector);
 
 	//Setup player input
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -52,6 +52,10 @@ public:
 	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class AProjectile> ProjectileClass;
+	
+	// Projectile class to spawn.
+	UPROPERTY(EditDefaultsOnly, Category = Projectile)
+	TSubclassOf<class AProjectile> GiantCheeseClass;
 
 	//Stall time in between shots
 	UPROPERTY(EditAnywhere)
@@ -60,9 +64,29 @@ public:
 	UPROPERTY()
 	bool bCanShoot;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UNiagaraSystem* SpawnProjectileSystem;
+
 	UFUNCTION()
 	void ReactivateShooting();
 
 	UPROPERTY()
 	FTimerHandle ShootTimer;
+
+	UFUNCTION(Reliable, Server)
+	void Server_Ultimate(FVector Location);
+	void Server_Ultimate_Implementation(FVector Location);
+
+	UFUNCTION(Reliable, NetMulticast)
+	void Multicast_Ultimate(FVector Location);
+	void Multicast_Ultimate_Implementation(FVector Location);
+
+	void Ultimate() override;
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	float MaxTraceDistance = 10000.0f;
+
+	void Ability() override;
+
+
 };

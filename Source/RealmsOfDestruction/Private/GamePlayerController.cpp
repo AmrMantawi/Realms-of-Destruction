@@ -266,7 +266,7 @@ void AGamePlayerController::SelectCharacter(TSubclassOf<ACharacterMovement> Sele
 
 void AGamePlayerController::SpawnCharacter()
 {
-	if (SelectCharacter == nullptr)
+	if (SelectedCharacter == nullptr)
 		return;
 
 	//Spawn character if in a valid match state for character spawning

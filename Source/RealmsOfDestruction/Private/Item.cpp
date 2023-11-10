@@ -108,6 +108,10 @@ void AItem::Deactivate()
 	//Set mesh to invisible
 	MeshComponent->SetVisibility(false);
 
+	if (NiagraSystem)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), NiagraSystem, GetActorLocation());
+	}
 
 	if (HasAuthority())
 	{

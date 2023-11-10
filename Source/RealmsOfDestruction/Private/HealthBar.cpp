@@ -4,16 +4,39 @@
 #include "HealthBar.h"
 
 
-void UHealthBar::SetHealth(float value)
+void UHealthBar::SetHealth(float Value)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Health Set: %f"), value);
-	float temp = (0.365 + (0.635 * value));
+	//Update value of health bar
+	float temp = (0.365 + (0.635 * Value));
 	HealthBar->SetPercent(temp);
 }
 
-void UHealthBar::SetShield(float value)
+void UHealthBar::SetShield(float Value)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Shield Set: %f"), value);
-	float temp = (0.365 + (0.41 * value));
+	//Update value of shield bar
+	float temp = (0.365 + (0.41 * Value));
 	ShieldBar->SetPercent(temp);
+}
+
+void UHealthBar::ShowSpeed()
+{
+	Speed->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UHealthBar::ShowStrength()
+{
+	Strength->SetVisibility(ESlateVisibility::Visible);
+
+}
+
+void UHealthBar::HideSpeed()
+{
+	Speed->SetVisibility(ESlateVisibility::Hidden);
+
+}
+
+void UHealthBar::HideStrength()
+{
+	Strength->SetVisibility(ESlateVisibility::Hidden);
+
 }

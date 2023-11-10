@@ -30,53 +30,52 @@ void APenguin::Fire()
 {
     if (ProjectileClass)
     {
-        // Attempt to fire a projectile.
+        // Get the camera location and forward vector
+        FVector CameraLocation = GetActorLocation() + FPSCameraComponent->GetRelativeLocation();
+        FRotator CameraRotation = GetActorRotation() + FPSCameraComponent->GetRelativeRotation();
+        //GetActorEyesViewPoint(CameraLocation, CameraRotation);
+        FVector TraceEnd = CameraLocation + (CameraRotation.Vector() * MaxTraceDistance); // Adjust MaxTraceDistance to your desired value
 
-        // Get the camera transform.
-        FVector CameraLocation;
-        FRotator CameraRotation;
-        GetActorEyesViewPoint(CameraLocation, CameraRotation);
+        FHitResult HitResult;
+        FCollisionQueryParams QueryParams;
+        QueryParams.AddIgnoredActor(this); // Ignore the actor itself
+        // Perform line trace
+        bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, CameraLocation, TraceEnd, ECC_Visibility, QueryParams);
 
-
-        // Transform MuzzleOffset from camera space to world space.
+        
+        // Calculate the vector from muzzle location to hit point
         FVector MuzzleLocation = CheeseBlock->GetComponentLocation();
+        FVector ImpactPoint = HitResult.ImpactPoint;
+        if (!bHit)
+        {
+            ImpactPoint = TraceEnd;
+        }
+        
+        FVector MuzzleToImpact = ImpactPoint - MuzzleLocation;
 
-        // Skew the aim to be slightly upwards.
-        FRotator MuzzleRotation = CameraRotation;
-        MuzzleRotation.Pitch += 2.0f;
-        MuzzleRotation.Yaw += -2.0f;
-
+        
         UWorld* World = GetWorld();
         if (World)
         {
-            if (HasAuthority() && IsLocallyControlled())
-            {
-                //Server Player
-                Multicast_Fire(MuzzleLocation, MuzzleRotation);
-            }
-            else if (!HasAuthority())
-            {
-                //Client
-                Server_Fire(MuzzleLocation, MuzzleRotation);
-            }
+            Server_Fire(MuzzleLocation, MuzzleToImpact);
         }
-
     }
 
+    
 }
 
-void APenguin::Server_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation)
+void APenguin::Server_Fire_Implementation(FVector MuzzleLocation, FVector ShootVector)
 {
-    Multicast_Fire(MuzzleLocation, MuzzleRotation);
+    Multicast_Fire(MuzzleLocation, ShootVector);
 }
 
 
-void APenguin::Multicast_Fire_Implementation(FVector MuzzleLocation, FRotator MuzzleRotation)
+void APenguin::Multicast_Fire_Implementation(FVector MuzzleLocation, FVector ShootVector)
 {
-    Shoot(MuzzleLocation, MuzzleRotation);
+    Shoot(MuzzleLocation, ShootVector);
 }
 
-void APenguin::Shoot(FVector MuzzleLocation, FRotator MuzzleRotation)
+void APenguin::Shoot(FVector MuzzleLocation, FVector ShootVector)
 {
     if (bCanShoot)
     {
@@ -99,15 +98,16 @@ void APenguin::Shoot(FVector MuzzleLocation, FRotator MuzzleRotation)
                     GetWorld()->GetTimerManager().SetTimer(ShootTimer, this, &APenguin::ReactivateShooting, ShootStall, false);
                     bCanShoot = false;
                 }
-                // Spawn the projectile at the muzzle.
-                AProjectile* Projectile = World->SpawnActor<AProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+                //Spawn the projectile at the muzzle.
+                AProjectile* Projectile = World->SpawnActor<AProjectile>(ProjectileClass, MuzzleLocation, FRotator::ZeroRotator, SpawnParams);
                 if (Projectile)
                 {
-                    // Set the projectile's initial trajectory.
+                    //Set the projectile's initial trajectory.
                     Projectile->damage *= DamageBoostMultiplier;
                     Projectile->Mesh->SetRelativeRotation(CheeseBlock->GetRelativeRotation());
-                    FVector LaunchDirection = MuzzleRotation.Vector();
-                    Projectile->FireInDirection(LaunchDirection);
+                    
+                    //Fire projectile in direction of impact point
+                    Projectile->FireInDirection(ShootVector/ShootVector.Length());
                 }
             }
         }
@@ -116,7 +116,75 @@ void APenguin::Shoot(FVector MuzzleLocation, FRotator MuzzleRotation)
 
 void APenguin::ReactivateShooting()
 {
+    if (SpawnProjectileSystem)
+    {
+        UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SpawnProjectileSystem, CheeseBlock->GetComponentLocation());
+    }
     CheeseBlock->SetVisibility(true);
-
     bCanShoot = true;
+}
+
+void APenguin::Ability()
+{
+
+}
+
+void APenguin::Ultimate()
+{
+    if (!bCanShoot)
+    {
+        return;
+    }
+    // Get the camera location and forward vector
+    FVector CameraLocation = GetActorLocation() + FPSCameraComponent->GetRelativeLocation();
+    FRotator CameraRotation = GetActorRotation() + FPSCameraComponent->GetRelativeRotation();
+    //GetActorEyesViewPoint(CameraLocation, CameraRotation);
+    FVector TraceEnd = CameraLocation + (CameraRotation.Vector() * MaxTraceDistance); // Adjust MaxTraceDistance to your desired value
+
+    FHitResult HitResult;
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this); // Ignore the actor itself
+    // Perform line trace
+    bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, CameraLocation, TraceEnd, ECC_Visibility, QueryParams);
+
+
+    // Calculate the vector from muzzle location to hit point
+    FVector MuzzleLocation = HitResult.ImpactPoint + FVector(0.0f, 0.0f, 500.0f);
+    Server_Ultimate(MuzzleLocation);
+}
+
+
+void APenguin::Server_Ultimate_Implementation(FVector Location)
+{
+
+
+
+    Multicast_Ultimate(Location);
+}
+
+
+void APenguin::Multicast_Ultimate_Implementation(FVector Location)
+{
+    // Attempt to fire a projectile.
+    if (GiantCheeseClass)
+    {
+        UWorld* World = GetWorld();
+        if (World)
+        {
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.Owner = this;
+            SpawnParams.Instigator = GetInstigator();
+
+            //Spawn the projectile at the muzzle.
+            AProjectile* Projectile = World->SpawnActor<AProjectile>(GiantCheeseClass, Location, FRotator::ZeroRotator, SpawnParams);
+            if (Projectile)
+            {
+                //Set the projectile's initial trajectory.
+                Projectile->damage *= DamageBoostMultiplier;
+
+                //Fire projectile in direction of impact point
+                Projectile->FireInDirection(FVector(0.0f, 0.0f, -1.0f));
+            }
+        }
+    }
 }

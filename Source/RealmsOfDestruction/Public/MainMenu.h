@@ -8,6 +8,8 @@
 #include "Components/PanelWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
+#include "Components/Border.h"
+#include "SettingsMenu.h"
 #include "EOSGameInstance.h"
 #include "Entry.h"
 #include "MainMenu.generated.h"
@@ -45,9 +47,21 @@ public:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UButton* SettingsButton;
 
+	UPROPERTY(EditAnywhere, meta = (BindWidget), BlueprintReadWrite)
+	UBorder* PauseMenu;
+
 	//Trasport player to practice level
 	UFUNCTION(BlueprintCallable, Category = "Game Manager")
 	void PracticeGame();
+
+	UFUNCTION()
+	void TogglePauseMenu();
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	USettingsMenu* W_Settings;
+
+	UFUNCTION()
+	void ToggleSettingsMenu();
 
 private:
 	//Handle Menu teardown
@@ -57,4 +71,5 @@ protected:
 	class IOnlineSubsystem* OnlineSubsystem;
 
 	virtual void OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld) override;
+
 };

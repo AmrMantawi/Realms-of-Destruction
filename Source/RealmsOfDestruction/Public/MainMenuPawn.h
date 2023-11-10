@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SettingsMenu.h"
 #include "MainMenu.h"
 #include "GameFramework/Pawn.h"
 #include "MainMenuPawn.generated.h"
@@ -16,21 +15,12 @@ class REALMSOFDESTRUCTION_API AMainMenuPawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	AMainMenuPawn();
-	
-	UPROPERTY()
-	class USettingsMenu* playerSettingsMenu;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class USettingsMenu> SettingsMenuClass;
-
-	UPROPERTY()
-	bool settingsDisplayed = false;
 
 	UFUNCTION()
-	void ToggleSettingsMenu();
+	void TogglePauseMenu();
 
 	UPROPERTY()
-	class UMainMenu* playerMainMenu;
+	class UMainMenu* PlayerMainMenu;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UMainMenu> MainMenuClass;

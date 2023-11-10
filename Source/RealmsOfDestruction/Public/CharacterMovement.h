@@ -79,6 +79,18 @@ protected:
 	UFUNCTION()
 	void OnRep_HandleCharacterState();
 
+	UPROPERTY(ReplicatedUsing = OnRep_LightningEffectActive)
+	bool bLightningEffectActive = false;
+
+	UFUNCTION()
+	void OnRep_LightningEffectActive();
+
+	UFUNCTION()
+	virtual void Ability();
+		
+	UFUNCTION()
+	virtual void Ultimate();
+
 private:
 	
 	UPROPERTY(ReplicatedUsing = OnRep_HandleCharacterState)
@@ -95,6 +107,9 @@ private:
 
 	FTimerHandle TimerHandle;
 
+	UPROPERTY()
+	bool bFOVChange = false;
+
 protected:
 
 	// FPS camera.
@@ -103,6 +118,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "PostProcessing")
 	class UPostProcessComponent* PostProcessComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Niagra")
+	class UNiagaraComponent* LightningTrail;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

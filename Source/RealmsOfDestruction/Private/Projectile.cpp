@@ -95,12 +95,22 @@ void AProjectile::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 		}
 
 		//Create niagra system on collision
-		if (HitSystem)
+		/*if (HitSystem)
 		{
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitSystem, GetActorLocation());
-		}
+		}*/
 
 		//Destroy projectile
-		this->Destroy();
+		if(bDestroyOnCollision)
+			this->Destroy();
+	}
+}
+
+void AProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	//Create niagra system on collision
+	if (HitSystem)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitSystem, GetActorLocation());
 	}
 }
